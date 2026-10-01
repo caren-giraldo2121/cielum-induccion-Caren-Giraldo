@@ -1,6 +1,6 @@
 ## Cielum Inducción - Caren Giraldo
 
-Repositorio creado para recopilar y documentar las actividades realizadas durante el proceso de inducción técnica en Cielum, incluyendo ejercicios de desarrollo y prácticas relacionadas con el uso de Git y GitHub.
+Repositorio creado para documentar las actividades asignadas durante el proceso de inducción técnica en Cielum, incluyendo ejercicios de desarrollo y prácticas relacionadas con el uso de Git y GitHub.
 
 ## Descripción
 
