@@ -1,0 +1,67 @@
+// ==========================================
+// EJERCICIO INTERMEDIO: GESTIÓN DE PEDIDOS
+// ==========================================
+
+// Arreglo de 20 pedidos ficticios
+const pedidos = [
+  { id: 1, cliente: "Ana Gómez", ciudad: "Bogotá", total: 150000, estado: "completado" },
+  { id: 2, cliente: "Carlos Pérez", ciudad: "Medellín", total: 80000, estado: "pendiente" },
+  { id: 3, cliente: "Lucía Torres", ciudad: "Cali", total: 220000, estado: "completado" },
+  { id: 4, cliente: "Mateo Rojas", ciudad: "Bogotá", total: 95000, estado: "pendiente" },
+  { id: 5, cliente: "Sofía Ruiz", ciudad: "Medellín", total: 310000, estado: "completado" },
+  { id: 6, cliente: "Ana Gómez", ciudad: "Bogotá", total: 45000, estado: "completado" },
+  { id: 7, cliente: "David Castro", ciudad: "Cali", total: 120000, estado: "pendiente" },
+  { id: 8, cliente: "Elena Vargas", ciudad: "Barranquilla", total: 180000, estado: "completado" },
+  { id: 9, cliente: "Carlos Pérez", ciudad: "Medellín", total: 250000, estado: "completado" },
+  { id: 10, cliente: "Julian Morales", ciudad: "Bogotá", total: 60000, estado: "pendiente" },
+  { id: 11, cliente: "Valeria Ríos", ciudad: "Cali", total: 135000, estado: "completado" },
+  { id: 12, cliente: "Sofía Ruiz", ciudad: "Medellín", total: 90000, estado: "pendiente" },
+  { id: 13, cliente: "Andrés Silva", ciudad: "Barranquilla", total: 400000, estado: "completado" },
+  { id: 14, cliente: "Ana Gómez", ciudad: "Bogotá", total: 210000, estado: "pendiente" },
+  { id: 15, cliente: "Lucía Torres", ciudad: "Cali", total: 75000, estado: "completado" },
+  { id: 16, cliente: "Mateo Rojas", ciudad: "Bogotá", total: 160000, estado: "completado" },
+  { id: 17, cliente: "David Castro", ciudad: "Cali", total: 110000, estado: "completado" },
+  { id: 18, cliente: "Elena Vargas", ciudad: "Barranquilla", total: 230000, estado: "pendiente" },
+  { id: 19, cliente: "Julian Morales", ciudad: "Bogotá", total: 195000, estado: "completado" },
+  { id: 20, cliente: "Valeria Ríos", ciudad: "Cali", total: 85000, estado: "pendiente" }
+];
+
+// 1. Total vendido (usando reduce)
+const totalVendido = pedidos.reduce((acumulador, pedido) => acumulador + pedido.total, 0);
+console.log("--- 1. Total Vendido ---");
+console.log(totalVendido);
+
+// 2. Total por ciudad (usando reduce para agrupar)
+const totalPorCiudad = pedidos.reduce((acc, pedido) => {
+  acc[pedido.ciudad] = (acc[pedido.ciudad] || 0) + pedido.total;
+  return acc;
+}, {});
+console.log("\n--- 2. Total por Ciudad ---");
+console.log(totalPorCiudad);
+
+// 3. Pedidos pendientes (usando filter)
+const pedidosPendientes = pedidos.filter(pedido => pedido.estado === "pendiente");
+console.log("\n--- 3. Pedidos Pendientes ---");
+console.log(pedidosPendientes);
+
+// 4. Pedido más caro (usando reduce)
+const pedidoMasCaro = pedidos.reduce((max, pedido) => (pedido.total > max.total ? pedido : max), pedidos[0]);
+console.log("\n--- 4. Pedido más Caro ---");
+console.log(pedidoMasCaro);
+
+// 5. Promedio de compra por cliente (usando reduce y map)
+const resumenClientes = pedidos.reduce((acc, pedido) => {
+  if (!acc[pedido.cliente]) {
+    acc[pedido.cliente] = { sumaTotal: 0, cantidad: 0 };
+  }
+  acc[pedido.cliente].sumaTotal += pedido.total;
+  acc[pedido.cliente].cantidad += 1;
+  return acc;
+}, {});
+
+const promedioPorCliente = Object.keys(resumenClientes).map(cliente => ({
+  cliente,
+  promedio: resumenClientes[cliente].sumaTotal / resumenClientes[cliente].cantidad
+}));
+console.log("\n--- 5. Promedio por Cliente ---");
+console.log(promedioPorCliente);
