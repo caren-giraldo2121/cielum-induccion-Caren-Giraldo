@@ -5,6 +5,7 @@ Este repositorio contiene las actividades realizadas en la inducción de Cielum,
 ## Descripción
 
 Este repositorio contiene las actividades, pruebas y prácticas realizadas la inducción en Cielum, orientadas al fortalecimiento de conocimientos en desarrollo de software, Git y GitHub.
+Este repositorio contiene las actividades, ejercicios, pruebas y prácticas realizadas la inducción en Cielum, orientadas al fortalecimiento de conocimientos en desarrollo de software, Git y GitHub.
 
 ## Objetivos
 - Practicar el uso de Git y GitHub.
