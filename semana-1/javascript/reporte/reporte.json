@@ -1,0 +1,52 @@
+[
+  {
+    "usuario": "Carlos Pérez",
+    "ciudad": "Bogotá",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "Ana Gómez",
+    "ciudad": "Medellín",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "Luis Rodríguez",
+    "ciudad": "Cali",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "María López",
+    "ciudad": "Barranquilla",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "José Martínez",
+    "ciudad": "Cartagena",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "Lucía Fernández",
+    "ciudad": "Cúcuta",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "Andres Gómez",
+    "ciudad": "Bucaramanga",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "Sofía Torres",
+    "ciudad": "Pereira",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "David Ramírez",
+    "ciudad": "Santa Marta",
+    "cantidadDePosts": 10
+  },
+  {
+    "usuario": "Valentina Díaz",
+    "ciudad": "Manizales",
+    "cantidadDePosts": 10
+  }
+]

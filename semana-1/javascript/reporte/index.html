@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Usuarios</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f9; }
+        h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+
+    <h2>📋 Reporte de Usuarios y Publicaciones</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Ciudad</th>
+                <th>Cantidad de Posts</th>
+            </tr>
+        </li>
+        <tbody id="tabla-cuerpo">
+            <!-- Los datos se inyectarán aquí mediante JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        async function cargarReporteWeb() {
+            const tbody = document.getElementById('tabla-cuerpo');
+            try {
+                // Consumimos los datos de la misma API para pintarlos en la tabla
+                const [resUsers, resPosts] = await Promise.all([
+                    fetch('https://jsonplaceholder.typicode.com/users'),
+                    fetch('https://jsonplaceholder.typicode.com/posts')
+                ]);
+
+                const usuarios = await resUsers.json();
+                const posts = await resPosts.json();
+
+                tbody.innerHTML = ''; // Limpiar estado de carga
+
+                usuarios.forEach(usuario => {
+                    const cantidadPosts = posts.filter(p => p.userId === usuario.id).length;
+                    
+                    const fila = document.createElement('tr');
+                    fila.innerHTML = `
+                        <td>${usuario.name}</td>
+                        <td>${usuario.address.city}</td>
+                        <td>${cantidadPosts}</td>
+                    `;
+                    tbody.appendChild(fila);
+                });
+
+            } catch (error) {
+                console.error("Error cargando la tabla:", error);
+                tbody.innerHTML = `<tr><td colspan="3" style="color:red; text-align:center;">Error al cargar los datos</td></tr>`;
+            }
+        }
+
+        cargarReporteWeb();
+    </script>
+
+</body>
+</html>
