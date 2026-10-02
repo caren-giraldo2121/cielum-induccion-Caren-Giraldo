@@ -15,7 +15,7 @@ const ciudadesComunes = [
 ];
 
 function generarReporte(usuarios, posts) {
-    // Cruzamos los datos y reemplazamos los nombres y ciudades por opciones comunes
+  
     const reporteConsolidado = usuarios.map((usuario, indice) => {
         const totalPosts = posts.filter(post => post.userId === usuario.id).length;
         
