@@ -126,3 +126,57 @@ try:
     print(f"Conversión exitosa: {numero_convertido}")
 except ValueError:
     print("Error: No se pudo convertir el texto ingresado a un número entero.")
+
+-------------------------------------------------------------------------------------------------
+## tabla de ejemplo
+CREATE TABLE ventas (
+    id_venta INT,
+    categoria VARCHAR(50),
+    monto DECIMAL(10,2),
+    fecha DATE
+);
+
+INSERT INTO ventas (id_venta, categoria, monto, fecha) VALUES
+(1, 'Electronica', 150.00, '2026-01-01'),
+(2, 'Electronica', 200.00, '2026-01-02'),
+(3, 'Ropa', 50.00, '2026-01-01'),
+(4, 'Ropa', 80.00, '2026-01-03');
+
+
+
+SELECT 
+    id_venta,
+    categoria,
+    monto AS monto_sin_iva,
+    -- Calcular el 19% del IVA de manera dinámica
+    monto * 0.19 AS valor_iva,
+    -- Calcular el total a pagar sumando el monto más el IVA
+    monto * 1.19 AS total_con_iva
+FROM ventas;
+
+
+id V Categoria  monto sin iva  valor iva  total con iva
+1	Electronica	150.00	        28.5000	    178.5000
+2	Electronica	200.00	        38.0000	    238.0000
+3	Ropa	    50.00     	    9.5000	    59.5000
+4	Ropa	    80.00	         15.2000	95.2000
+1	Electronica	150.00	        28.5000	    178.5000
+2	Electronica	200.00	        38.0000 	238.0000
+3	Ropa	    50.00	        9.5000	    59.5000
+4	Ropa	    80.00	        15.2000	    95.2000
+1	Electronica	150.00	       28.5000	    178.5000
+2	Electronica	200.00	      38.0000	    238.0000
+3	Ropa	    50.00     	  9.5000	    59.5000
+4	Ropa	    80.00	      15.2000	    95.2000
+1	Electronica	150.00	      28.5000	    178.5000
+2	Electronica	200.00	      38.0000	    238.0000
+3	Ropa	    50.00    	  9.5000	     59.5000
+4	Ropa	    80.00	      15.2000	    95.2000
+1	Electronica	150.00	      28.5000	     178.5000
+2	Electronica	200.00	      38.0000	     238.0000
+3	Ropa	    50.00     	 9.5000	        59.5000
+4	Ropa	    80.00	     15.2000	    95.2000
+1	Electronica	150.00	     28.5000	    178.5000
+2	Electronica	200.00	     38.0000	    238.0000
+3	Ropa	    50.00	     9.5000	        59.5000
+4	Ropa	    80.00	     15.2000	    95.2000
