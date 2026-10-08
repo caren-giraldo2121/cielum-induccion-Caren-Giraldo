@@ -31,7 +31,10 @@ app.get('/salud', (req, res) => {
 // ====================
 
 let productos = [];
-let idCounter = 1;
+
+app.get('/productos', (req, res) => {
+    res.json(productos);
+});
 
 // Crear producto
 app.post('/productos', (req, res) => {
