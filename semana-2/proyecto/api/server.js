@@ -1,6 +1,8 @@
 const express = require('express');
 const { Pool } = require('pg');
 const { z } = require('zod');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
@@ -311,12 +313,36 @@ app.delete('/clientes/:id', async (req, res) => {
 
 app.get('/pedidos', async (req, res) => {
     try {
-        const resultado = await pool.query(
-            `SELECT * FROM pedidos
-             ORDER BY id_pedido`
-        );
+        const { estado } = req.query;
 
-        res.json(resultado.rows);
+        const pagina = parseInt(req.query.pagina) || 1;
+        const limite = parseInt(req.query.limite) || 10;
+
+        const offset = (pagina - 1) * limite;
+
+        let consulta = `
+            SELECT *
+            FROM pedidos
+        `;
+
+        let valores = [];
+
+        if (estado) {
+            consulta += ` WHERE estado = $1`;
+            valores.push(estado);
+        }
+
+        consulta += ` ORDER BY id_pedido LIMIT $${valores.length + 1} OFFSET $${valores.length + 2}`;
+
+        valores.push(limite, offset);
+
+        const resultado = await pool.query(consulta, valores);
+
+        res.json({
+            pagina: pagina,
+            limite: limite,
+            resultados: resultado.rows
+        });
 
     } catch (error) {
         console.error(error);
@@ -326,6 +352,7 @@ app.get('/pedidos', async (req, res) => {
         });
     }
 });
+
 app.get('/pedidos/:id', async (req, res) => {
     try {
         const id = parseInt(req.params.id);
@@ -399,6 +426,87 @@ app.post('/pedidos', async (req, res) => {
 
         res.status(500).json({
             error: 'Error al crear el pedido'
+        });
+
+    } finally {
+        client.release();
+    }
+});
+app.put('/pedidos/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { id_cliente, estado } = req.body;
+
+        const resultado = await pool.query(
+            `UPDATE pedidos
+             SET id_cliente = $1, estado = $2
+             WHERE id_pedido = $3
+             RETURNING *`,
+            [id_cliente, estado, id]
+        );
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Pedido no encontrado'
+            });
+        }
+
+        res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al actualizar el pedido'
+        });
+    }
+});
+
+app.delete('/pedidos/:id', async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const id = parseInt(req.params.id);
+
+        await client.query('BEGIN');
+
+        // Eliminar los detalles del pedido
+        await client.query(
+            `DELETE FROM detalle_pedido
+             WHERE id_pedido = $1`,
+            [id]
+        );
+
+        // Eliminar el pedido
+        const resultado = await client.query(
+            `DELETE FROM pedidos
+             WHERE id_pedido = $1
+             RETURNING *`,
+            [id]
+        );
+
+        if (resultado.rows.length === 0) {
+            await client.query('ROLLBACK');
+
+            return res.status(404).json({
+                error: 'Pedido no encontrado'
+            });
+        }
+
+        await client.query('COMMIT');
+
+        res.json({
+            mensaje: 'Pedido eliminado correctamente',
+            pedido: resultado.rows[0]
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al eliminar el pedido'
         });
 
     } finally {
