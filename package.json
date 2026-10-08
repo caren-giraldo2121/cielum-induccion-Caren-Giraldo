@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "dotenv": "^18.0.6",
+    "express": "^5.2.1",
+    "pg": "^8.23.1",
+    "zod": "^4.6.5"
+  },
+  "name": "cielum-induccion-caren-giraldo",
+  "version": "1.0.0",
+  "description": "Este repositorio contiene las actividades realizadas en la inducción de Cielum, incluyendo ejercicios de desarrollo y prácticas relacionadas con el uso de Git y GitHub.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/caren-giraldo2121/cielum-induccion-Caren-Giraldo.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/caren-giraldo2121/cielum-induccion-Caren-Giraldo/issues"
+  },
+  "homepage": "https://github.com/caren-giraldo2121/cielum-induccion-Caren-Giraldo#readme"
+}
