@@ -8,7 +8,11 @@ app.use(express.json());
 
 // Conexión con PostgreSQL
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL
+    host: 'localhost',
+    port: 5432,
+    database: 'postgres',
+    user: 'postgres',
+    password: '123456'
 });
 
 // ====================
@@ -106,17 +110,18 @@ app.delete('/productos/:id', (req, res) => {
 // ====================
 // PRUEBA POSTGRESQL
 // ====================
-
 app.get('/prueba-db', async (req, res) => {
     try {
-        const resultado = await pool.query('SELECT * FROM productos');
+      const resultado = await pool.query('SELECT * FROM productos');
 
         res.json(resultado.rows);
     } catch (error) {
-        console.error(error);
+        console.log("ERROR REAL:");
+        console.log(error);
 
         res.status(500).json({
-            error: 'Error al conectar con PostgreSQL'
+            error: error.message,
+            codigo: error.code
         });
     }
 });
