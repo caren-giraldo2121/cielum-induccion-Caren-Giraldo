@@ -1,5 +1,6 @@
 const express = require('express');
 const { Pool } = require('pg');
+const { z } = require('zod');
 require('dotenv').config();
 
 const app = express();
@@ -8,12 +9,22 @@ app.use(express.json());
 
 // Conexión con PostgreSQL
 const pool = new Pool({
-    host: 'localhost',
-    port: 5432,
-    database: 'postgres',
-    user: 'postgres',
-    password: '123456'
+    connectionString: process.env.DATABASE_URL
 });
+
+    const productoSchema = z.object({
+    nombre: z.string().min(1, 'El nombre es obligatorio'),
+    precio: z.number().positive('El precio debe ser mayor que 0'),
+    stock: z.number().int().nonnegative('El stock no puede ser negativo')
+});
+const validarProducto = (req, res, next) => {
+    try {
+        req.body = productoSchema.parse(req.body);
+        next();
+    } catch (error) {
+        next(error);
+    }
+};
 
 // ====================
 // SALUD DEL SERVIDOR
@@ -30,84 +41,130 @@ app.get('/salud', (req, res) => {
 // CRUD EN MEMORIA
 // ====================
 
-let productos = [];
 
-app.get('/productos', (req, res) => {
-    res.json(productos);
+app.get('/productos', async (req, res) => {
+    try {
+        const resultado = await pool.query(
+            'SELECT * FROM productos ORDER BY id_producto'
+        );
+        console.log("PRODUCTOS DESDE BD:", resultado.rows);
+
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al obtener los productos'
+        });
+    }
 });
+app.post('/productos', validarProducto, async (req, res) => {
+    try {
+        const { nombre, precio, stock } = req.body;
 
-// Crear producto
-app.post('/productos', (req, res) => {
-    const { nombre, precio, stock } = req.body;
+        const resultado = await pool.query(
+            `INSERT INTO productos (nombre, precio, stock)
+             VALUES ($1, $2, $3)
+             RETURNING *`,
+            [nombre, precio, stock]
+        );
 
-    const nuevoProducto = {
-        id: idCounter++,
-        nombre,
-        precio,
-        stock
-    };
+        res.status(201).json(resultado.rows[0]);
 
-    productos.push(nuevoProducto);
+    } catch (error) {
+        console.error(error);
 
-    res.status(201).json(nuevoProducto);
-});
-
-// Obtener todos los productos
-app.get('/productos', (req, res) => {
-    res.json(productos);
+        res.status(500).json({
+            error: 'Error al crear el producto'
+        });
+    }
 });
 
 // Obtener un producto por ID
-app.get('/productos/:id', (req, res) => {
-    const id = parseInt(req.params.id);
+app.get('/productos/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
 
-    const producto = productos.find(p => p.id === id);
+        const resultado = await pool.query(
+            'SELECT * FROM productos WHERE id_producto = $1',
+            [id]
+        );
 
-    if (!producto) {
-        return res.status(404).json({
-            error: "Producto no encontrado"
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Producto no encontrado'
+            });
+        }
+
+        res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al obtener el producto'
         });
     }
-
-    res.json(producto);
 });
 
 // Actualizar producto
-app.put('/productos/:id', (req, res) => {
-    const id = parseInt(req.params.id);
+app.put('/productos/:id', validarProducto, async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { nombre, precio, stock } = req.body;
 
-    const producto = productos.find(p => p.id === id);
+        const resultado = await pool.query(
+            `UPDATE productos
+             SET nombre = $1, precio = $2, stock = $3
+             WHERE id_producto = $4
+             RETURNING *`,
+            [nombre, precio, stock, id]
+        );
 
-    if (!producto) {
-        return res.status(404).json({
-            error: "Producto no encontrado"
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Producto no encontrado'
+            });
+        }
+
+        res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al actualizar el producto'
         });
     }
-
-    const { nombre, precio, stock } = req.body;
-
-    producto.nombre = nombre;
-    producto.precio = precio;
-    producto.stock = stock;
-
-    res.json(producto);
 });
 
 // Eliminar producto
-app.delete('/productos/:id', (req, res) => {
-    const id = parseInt(req.params.id);
+app.delete('/productos/:id', async (req, res) => {
+    try {
+        const id = parseInt(req.params.id);
 
-    const indice = productos.findIndex(p => p.id === id);
+        const resultado = await pool.query(
+            `DELETE FROM productos
+             WHERE id_producto = $1
+             RETURNING *`,
+            [id]
+        );
 
-    if (indice === -1) {
-        return res.status(404).json({
-            error: "Producto no encontrado"
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({
+                error: 'Producto no encontrado'
+            });
+        }
+
+        res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al eliminar el producto'
         });
     }
-
-    const eliminado = productos.splice(indice, 1);
-
-    res.json(eliminado[0]);
 });
 
 // ====================
@@ -134,7 +191,20 @@ app.get('/prueba-db', async (req, res) => {
 // ====================
 
 const PORT = 3000;
+app.use((error, req, res, next) => {
+    if (error instanceof z.ZodError) {
+        return res.status(400).json({
+            error: 'Datos inválidos',
+            detalles: error.issues
+        });
+    }
 
+    console.error(error);
+
+    res.status(500).json({
+        error: 'Error interno del servidor'
+    });
+});
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
