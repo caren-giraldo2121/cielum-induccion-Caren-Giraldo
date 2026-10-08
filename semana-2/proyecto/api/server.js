@@ -1,8 +1,19 @@
 const express = require('express');
+const { Pool } = require('pg');
+require('dotenv').config();
 
 const app = express();
 
 app.use(express.json());
+
+// Conexión con PostgreSQL
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+});
+
+// ====================
+// SALUD DEL SERVIDOR
+// ====================
 
 app.get('/salud', (req, res) => {
     res.json({
@@ -10,6 +21,11 @@ app.get('/salud', (req, res) => {
         fecha: new Date()
     });
 });
+
+// ====================
+// CRUD EN MEMORIA
+// ====================
+
 let productos = [];
 let idCounter = 1;
 
@@ -86,6 +102,29 @@ app.delete('/productos/:id', (req, res) => {
 
     res.json(eliminado[0]);
 });
+
+// ====================
+// PRUEBA POSTGRESQL
+// ====================
+
+app.get('/prueba-db', async (req, res) => {
+    try {
+        const resultado = await pool.query('SELECT * FROM productos');
+
+        res.json(resultado.rows);
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            error: 'Error al conectar con PostgreSQL'
+        });
+    }
+});
+
+// ====================
+// SERVIDOR
+// ====================
+
 const PORT = 3000;
 
 app.listen(PORT, () => {
