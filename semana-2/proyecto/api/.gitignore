@@ -1,0 +1,13 @@
+# Dependencias
+node_modules/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno y temporales
+.env
+*.log
+dist/
+build/
+.vscode/
