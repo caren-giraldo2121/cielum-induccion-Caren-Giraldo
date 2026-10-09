@@ -102,3 +102,20 @@ Las rutas protegidas requieren un token JWT válido. Los demás endpoints y mét
 * Los tokens JWT tienen un tiempo de expiración de una hora.
 * Las variables de entorno y los secretos reales no deben publicarse en el repositorio.
 * Las consultas SQL utilizan parámetros para reducir el riesgo de inyección SQL.
+
+
+## Pruebas de API con JWT en Thunder Client
+
+Se realizaron pruebas de los endpoints del módulo de clientes utilizando Thunder Client. Se verificó el funcionamiento de las operaciones para listar, consultar, registrar, actualizar y eliminar clientes.
+
+También se probaron los mecanismos de autenticación y validación de datos, incluyendo solicitudes sin token, tokens inválidos, búsqueda de clientes inexistentes y registro con campos obligatorios vacíos.
+
+**Resultados obtenidos:**
+
+* `201 Created`: registro de un cliente exitoso.
+* `400 Bad Request`: rechazo de solicitudes con campos obligatorios vacíos.
+* `401 Unauthorized`: rechazo de solicitudes sin token o con token inválido.
+* `404 Not Found`: respuesta al consultar un cliente inexistente.
+
+**Resultado general:** las pruebas realizadas fueron satisfactorias y permitieron comprobar el funcionamiento de las operaciones del módulo de clientes, la autenticación JWT y la validación de los datos de entrada.
+

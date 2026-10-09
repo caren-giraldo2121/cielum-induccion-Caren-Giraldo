@@ -32,26 +32,36 @@ async function buscarCliente(req, res, next) {
 
 // Crear un cliente
 async function registrarCliente(req, res, next) {
-    try {
-        const { nombre, email, telefono } = req.body;
-        const cliente = await clientesService.crearCliente(
-            nombre, email, telefono
-        );
+try {
+const { nombre, email, telefono } = req.body;
 
-        res.status(201).json(cliente);
-    } catch (error) {
-        if (
-            error.code === '23505' &&
-            error.constraint === 'clientes_email_key'
-        ) {
-            return res.status(409).json({
-                error: 'Ya existe un cliente registrado con ese correo'
-            });
-        }
 
-        next(error);
+    // Validar los campos obligatorios
+    if (!nombre || !email || !telefono) {
+        return res.status(400).json({
+            error: 'El nombre, el email y el teléfono son obligatorios'
+        });
     }
+
+    const cliente = await clientesService.crearCliente(
+        nombre, email, telefono
+    );
+
+    res.status(201).json(cliente);
+} catch (error) {
+    if (
+        error.code === '23505' &&
+        error.constraint === 'clientes_email_key'
+    ) {
+        return res.status(409).json({
+            error: 'Ya existe un cliente registrado con ese correo'
+        });
+    }
+
+    next(error);
 }
+}
+
 
 // Actualizar un cliente
 async function modificarCliente(req, res, next) {
