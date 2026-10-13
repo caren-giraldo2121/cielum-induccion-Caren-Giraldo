@@ -1,5 +1,5 @@
-# Bitácora Día 08-10 · [Repo inicial, README y entorno.md]
-**Fecha:08/10/2026**
+# Bitácora Día 13-10 · [Repo inicial, README y entorno.md]
+**Fecha:13/10/2026**
 **Horas invertidas:** autoinvestigación __ h · práctica _x_ h · reto __ h
 
 ## Autoinvestigación básica
