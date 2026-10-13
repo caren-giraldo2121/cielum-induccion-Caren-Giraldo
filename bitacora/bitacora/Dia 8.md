@@ -9,7 +9,6 @@
 Una petición HTTP es un mensaje que un cliente, como un navegador, Thunder Client o una aplicación, envía a un servidor para solicitar información o realizar una operación.
 
 - Método HTTP
-
 Indica qué operación quiere realizar el cliente sobre un recurso. Los métodos más utilizados son: 
 GitHub
 
@@ -27,15 +26,12 @@ DELETE: eliminar un recurso.
 Es la dirección del recurso al que se dirige la petición. Puede contener el protocolo, el dominio, el puerto, la ruta y los parámetros de consulta.
 
 - Headers (cabeceras)
-
 Son metadatos que proporcionan información adicional al servidor, como el formato del contenido, el tipo de respuesta aceptada o las credenciales de autenticación.
 
 - Query params (parámetros de consulta)
-
 Son valores que se agregan a la URL después del signo ?. Se utilizan frecuentemente para filtrar, ordenar o paginar resultados. Si hay varios parámetros, se separan con &.
 
 - Body (cuerpo)
-
 Es la parte que contiene los datos que el cliente envía al servidor, por ejemplo, para registrar un cliente o crear un pedido. Puede contener JSON, datos de formularios o archivos. No todas las peticiones necesitan un cuerpo.
 
 Fuente: Mozilla. (s. f.). Mensajes HTTP. MDN Web Docs. 
@@ -123,4 +119,50 @@ https://docs.thunderclient.com/
 
 ## Autoinvestigación avanzada: 
 
+1. Scripts pre-request y post-response (tests) con pm.test y pm.expect.
 
+Scripts pre-request: son scripts que se ejecutan antes de enviar una solicitud a la API. Permiten realizar acciones previas, como establecer variables, configurar parámetros y preparar los datos de la solicitud.
+
+Scripts post-response (tests): son scripts que se ejecutan después de recibir la respuesta de la API y permiten realizar pruebas para comprobar si los datos y el código de estado cumplen con lo esperado.
+
+pm.test: permite definir una prueba mediante un nombre y una función que contiene las comprobaciones que se van a realizar.
+
+pm.expect: permite realizar comprobaciones sobre los valores de una respuesta para verificar si cumplen con las condiciones esperadas.
+
+Fuente: Postman. (s. f.). Write pre-request scripts to add dynamic behavior in Postman. https://learning.postman.com/v11/docs/tests-and-scripts/write-scripts/pre-request-scripts
+
+2. Guardar el token del login automáticamente en una variable.
+
+Consiste en guardar automáticamente el token que devuelve la API después de iniciar sesión en una variable de entorno o de colección. Esto permite reutilizarlo en otras solicitudes para autenticar al usuario sin tener que copiarlo manualmente.
+
+Fuente: Postman. (s. f.). Use variables in scripts. https://learning.postman.com/docs/tests-and-scripts/write-scripts/postman-sandbox-reference/pm-variables/
+
+3. Collection Runner y ejecuciones con archivos de datos (CSV/JSON).
+
+Collection Runner: es una herramienta de Postman que permite ejecutar todas las solicitudes de una colección en una secuencia, realizar pruebas automáticamente y revisar los resultados de cada ejecución.
+
+Ejecuciones con archivos de datos (CSV/JSON): permiten ejecutar una colección utilizando datos externos almacenados en archivos CSV o JSON. De esta manera, se pueden repetir las mismas solicitudes con diferentes valores sin tener que modificarlos manualmente en cada prueba.
+Por ejemplo, se puede probar el inicio de sesión con varios usuarios utilizando un archivo CSV o JSON con sus datos. Postman utiliza esos datos durante cada iteración de la colección.
+
+Fuente: Postman. (s. f.). Test your API using the Collection Runner. https://learning.postman.com/docs/tests-and-scripts/running-collections/intro-to-collection-runs
+
+4. Newman (ejecutar colecciones desde consola y en CI) y reportes HTML.
+
+Newman: es una herramienta de línea de comandos que permite ejecutar colecciones de Postman desde la consola, sin necesidad de utilizar la aplicación de Postman. También permite integrar las pruebas en sistemas de integración continua (CI) para ejecutarlas automáticamente cuando se realizan cambios en el código. 
+
+Ejecución desde consola: consiste en ejecutar una colección exportada de Postman utilizando comandos en la terminal.
+
+Integración continua (CI): permite ejecutar automáticamente las colecciones y sus pruebas dentro de un proceso de desarrollo, para comprobar si los cambios realizados funcionan correctamente.
+
+Reportes HTML: son informes que muestran los resultados de la ejecución de una colección en una página web, facilitando la revisión de las solicitudes y las pruebas realizadas. Para generarlos con Newman se necesita instalar un reportero HTML adicional.
+
+Ejemplo: Postman. (s. f.). Run and test collections from the command line using Newman CLI. https://learning.postman.com/docs/reference/newman-cli/command-line-integration-with-newman
+Newman. (s. f.). Newman. npm. https://www.npmjs.com/package/newman
+
+5. Mock servers y documentación publicada.
+
+Mock servers: son servidores simulados que permiten imitar el comportamiento de una API real, recibiendo solicitudes y devolviendo respuestas de ejemplo. Se utilizan para desarrollar y probar una API antes de que el servidor real esté disponible.
+
+Documentación publicada: consiste en compartir la documentación de una API mediante un enlace para que otras personas puedan consultar información sobre sus solicitudes, endpoints, parámetros y respuestas. Esto facilita que los desarrolladores comprendan cómo utilizar la API. 
+
+Fuente: Postman. (s. f.). Simulate your API in Postman with a mock server. https://learning.postman.com/docs/design-apis/mock-apis/overview
