@@ -125,3 +125,30 @@ No ejecutar como root: se recomienda ejecutar la aplicación con un usuario sin 
 No incluir secretos en la imagen: no se deben incorporar contraseñas, tokens ni claves privadas directamente en el Dockerfile o en la imagen. Para secretos que se necesitan durante la construcción, Docker proporciona mecanismos como los montajes de secretos de BuildKit.
 
 Utilizar imágenes pequeñas: elegir una imagen base que contenga solo los componentes necesarios puede reducir el tamaño de la imagen y su superficie de ataque. Las variantes alpine y slim pueden ayudar, aunque es importante comprobar su compatibilidad con la aplicación.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Se implementó una estrategia avanzada con construcción multi-etapa (multi-stage) y usuario no root para optimizar la seguridad y el rendimiento del contenedor de la API.
+
+## Comparativa de tamaño:
+
+Versión estándar (cielum-api:latest): 91.9 MB de contenido.  
+Versión avanzada (cielum-api:avanzada): 75.6 MB de contenido.
+
+## Conclusión:
+El enfoque multi-stage logró reducir significativamente el peso de la imagen y el uso en disco, mejorando la eficiencia y la seguridad para entornos de producción.
+
+
+# Reporte de Entrega: Reto Docker Compose y Pruebas Postman
+
+## 1. Arquitectura del Contenedor (`docker-compose.yml`)
+Se implementó un entorno multi-contenedor en la ruta `proyecto/docker-compose.yml` integrando los siguientes servicios bajo una red en puente (`red-cielum`):
+- **API**: Servicio backend contenedorizado mediante una imagen optimizada.
+- **PostgreSQL**: Base de datos relacional equipada con volúmenes de persistencia y scripts de inicialización.
+- **SQL Server**: Instancia oficial de Microsoft SQL Server configurada para el motor de datos corporativo.
+- **Adminer**: Interfaz web ligera para la gestión centralizada de bases de datos.
+
+## 2. Orquestación del Entorno
+El despliegue automático se validó ejecutando de manera exitosa el comando:
+```bash
+docker compose up -d
