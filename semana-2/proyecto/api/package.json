@@ -1,0 +1,21 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "API Cielum Inducción",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test:api": "newman run ./postman/coleccion.json -e ./postman/entorno_local.json -r htmlextra --reporter-htmlextra-export ./postman/reporte.html"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "newman": "^6.1.0",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
