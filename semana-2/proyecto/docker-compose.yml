@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: cian_api
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_HOST=postgres
+    depends_on:
+      - postgres
+      - sqlserver
+    networks:
+      - red-cielum
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: cian_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: cielum_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - red-cielum
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cian_sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "Password123*"
+    ports:
+      - "1433:1433"
+    networks:
+      - red-cielum
+
+  adminer:
+    image: adminer
+    container_name: cian_adminer
+    ports:
+      - "8080:8080"
+    networks:
+      - red-cielum
+
+volumes:
+  pgdata:
+
+networks:
+  red-cielum:
+    driver: bridge

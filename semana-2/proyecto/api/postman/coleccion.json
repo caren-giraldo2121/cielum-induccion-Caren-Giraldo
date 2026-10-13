@@ -1,170 +1,256 @@
 {
-  "info": {
-    "_postman_id": "63becfa7-204e-45cd-9189-67807b5d3559",
-    "name": "API Cielum Pruebas",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "58820448"
-  },
-  "item": [
-    {
-      "name": "login",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "var jsonData = pm.response.json();",
-              "if (jsonData.token) { pm.environment.set('token', jsonData.token); }",
-              "pm.test('1. Status code es 200', function () { pm.response.to.have.status(200); });",
-              "pm.test('2. La respuesta contiene token', function () { pm.expect(jsonData).to.have.property('token'); });",
-              "pm.test('3. El token es string', function () { pm.expect(jsonData.token).to.be.a('string'); });",
-              "pm.test('4. Contiene usuario', function () { pm.expect(jsonData).to.have.property('usuario'); });",
-              "pm.test('5. Tiempo de respuesta rapido', function () { pm.expect(pm.response.responseTime).to.be.below(1000); });"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test@correo.com\",\n  \"password\": \"123456\"\n}",
-          "options": { "raw": { "language": "json" } }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/auth/login",
-          "host": [ "{{baseUrl}}" ],
-          "path": [ "auth", "login" ]
-        }
-      }
-    },
-    {
-      "name": "Error 400 - Campos Vacios",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "var jsonData = pm.response.json();",
-              "pm.test('6. Status code es 400', function () { pm.response.to.have.status(400); });",
-              "pm.test('7. Es formato json', function () { pm.response.to.be.json; });",
-              "pm.test('8. Tiene propiedad error', function () { pm.expect(jsonData).to.have.property('error'); });",
-              "pm.test('9. Mensaje de obligatoriedad', function () { pm.expect(jsonData.error).to.include('obligatorios'); });",
-              "pm.test('10. Codigo http 400', function () { pm.expect(pm.response.code).to.eql(400); });"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"\",\n  \"password\": \"\"\n}",
-          "options": { "raw": { "language": "json" } }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/auth/login",
-          "host": [ "{{baseUrl}}" ],
-          "path": [ "auth", "login" ]
-        }
-      }
-    },
-    {
-      "name": "Error 401 - Contrasena Incorrecta",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "var jsonData = pm.response.json();",
-              "pm.test('11. Status code es 401', function () { pm.response.to.have.status(401); });",
-              "pm.test('12. Es formato json', function () { pm.response.to.be.json; });",
-              "pm.test('13. Tiene propiedad error', function () { pm.expect(jsonData).to.have.property('error'); });",
-              "pm.test('14. Credenciales incorrectas', function () { pm.expect(jsonData.error).to.include('incorrectos'); });",
-              "pm.test('15. Codigo http 401', function () { pm.expect(pm.response.code).to.eql(401); });"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "POST",
-        "header": [],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"test@correo.com\",\n  \"password\": \"mal\"\n}",
-          "options": { "raw": { "language": "json" } }
-        },
-        "url": {
-          "raw": "{{baseUrl}}/auth/login",
-          "host": [ "{{baseUrl}}" ],
-          "path": [ "auth", "login" ]
-        }
-      }
-    },
-    {
-      "name": "Listar Productos (Con Token)",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "var jsonData = pm.response.json();",
-              "pm.test('16. Status code es 200', function () { pm.response.to.have.status(200); });",
-              "pm.test('17. La respuesta es un array', function () { pm.expect(jsonData).to.be.an('array'); });",
-              "pm.test('18. No es nulo', function () { pm.expect(jsonData).to.not.be.null; });",
-              "pm.test('19. Tiene content-type', function () { pm.response.to.have.header('Content-Type'); });",
-              "pm.test('20. Tiempo menor a un segundo', function () { pm.expect(pm.response.responseTime).to.be.below(1000); });"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{token}}" }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/productos",
-          "host": [ "{{baseUrl}}" ],
-          "path": [ "productos" ]
-        }
-      }
-    },
-    {
-      "name": "Error 404 - Producto Inexistente",
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "type": "text/javascript",
-            "exec": [
-              "var jsonData = pm.response.json();",
-              "pm.test('21. Status code es 404', function () { pm.response.to.have.status(404); });",
-              "pm.test('22. Es formato json', function () { pm.response.to.be.json; });",
-              "pm.test('23. Contiene error', function () { pm.expect(jsonData).to.have.property('error'); });",
-              "pm.test('24. Es un objeto', function () { pm.expect(jsonData).to.be.an('object'); });",
-              "pm.test('25. Codigo http es 404', function () { pm.expect(pm.response.code).to.eql(404); });"
-            ]
-          }
-        }
-      ],
-      "request": {
-        "method": "GET",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{token}}" }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/productos/99999",
-          "host": [ "{{baseUrl}}" ],
-          "path": [ "productos", "99999" ]
-        }
-      }
-    }
-  ]
+	"info": {
+		"_postman_id": "cielum-api-tests",
+		"name": "API Cielum Pruebas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Login Exitoso (200 OK)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test('Response has token', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('token');",
+							"    pm.environment.set('token', jsonData.token);",
+							"});",
+							"pm.test('Response time is under 500ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"pm.test('Content-Type is JSON', function () {",
+							"    pm.response.to.have.header('Content-Type');",
+							"});",
+							"pm.test('Body is object', function () {",
+							"    pm.expect(pm.response.json()).to.be.an('object');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"admin@cielum.com\",\n    \"password\": \"123456\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				}
+			}
+		},
+		{
+			"name": "2. Login Error Bad Request (400)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 400', function () {",
+							"    pm.response.to.have.status(400);",
+							"});",
+							"pm.test('Response has error message', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('error');",
+							"});",
+							"pm.test('Response time is fast', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"pm.test('Content-Type header exists', function () {",
+							"    pm.response.to.have.header('Content-Type');",
+							"});",
+							"pm.test('Error response is object', function () {",
+							"    pm.expect(pm.response.json()).to.be.an('object');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/auth/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				}
+			}
+		},
+		{
+			"name": "3. Listar Productos No Autorizado (401)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 401', function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"pm.test('Contains authorization error', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"});",
+							"pm.test('Response time is below 500ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"pm.test('Response is JSON', function () {",
+							"    pm.response.to.be.json;",
+							"});",
+							"pm.test('Header verification', function () {",
+							"    pm.response.to.have.header('Content-Type');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos"
+					]
+				}
+			}
+		},
+		{
+			"name": "4. Listar Productos Exitoso (200 OK)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 200', function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"pm.test('Response is array or object with data', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.be.an('array');",
+							"});",
+							"pm.test('Response time is under 500ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"pm.test('Content-Type header exists', function () {",
+							"    pm.response.to.have.header('Content-Type');",
+							"});",
+							"pm.test('Response is valid JSON', function () {",
+							"    pm.response.to.be.json;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos"
+					]
+				}
+			}
+		},
+		{
+			"name": "5. Producto No Encontrado (404)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status code is 404', function () {",
+							"    pm.response.to.have.status(404);",
+							"});",
+							"pm.test('Response has not found message', function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('message');",
+							"});",
+							"pm.test('Response time is under 500ms', function () {",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);",
+							"});",
+							"pm.test('Content-Type header present', function () {",
+							"    pm.response.to.have.header('Content-Type');",
+							"});",
+							"pm.test('Body is object', function () {",
+							"    pm.expect(pm.response.json()).to.be.an('object');",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/productos/999999",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"productos",
+						"999999"
+					]
+				}
+			}
+		}
+	]
 }
