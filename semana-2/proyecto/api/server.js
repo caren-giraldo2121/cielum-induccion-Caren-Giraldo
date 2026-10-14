@@ -22,14 +22,6 @@ app.use('/clientes', clientesRoutes);
 app.use('/productos', productosRoutes);
 app.use('/pedidos', pedidosRoutes);
 app.use('/auth', authRoutes);
-
-
- 
-
-
-
-
-
 // ====================
 // SALUD DEL SERVIDOR
 // ====================
@@ -40,14 +32,6 @@ app.get('/salud', (req, res) => {
         fecha: new Date()
     });
 });
-
-// ====================
-// CRUD EN MEMORIA
-// ====================
-
-
-
-
 // ====================
 // PRUEBA POSTGRESQL
 // ====================
