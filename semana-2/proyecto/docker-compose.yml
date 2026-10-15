@@ -2,6 +2,7 @@ services:
   api:
     build: ./api
     container_name: cian_api
+    hostname: backend
     ports:
       - "3000:3000"
     environment:
