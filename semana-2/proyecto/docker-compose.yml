@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build: ./api
@@ -23,7 +21,7 @@ services:
       POSTGRES_PASSWORD: password123
       POSTGRES_DB: cielum_db
     ports:
-    - "5433:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -46,6 +44,19 @@ services:
     container_name: cian_adminer
     ports:
       - "8080:8080"
+    networks:
+      - red-cielum
+
+  frontend:
+    build:
+      context: ./frontend-react
+      args:
+        VITE_API_URL: /api
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
     networks:
       - red-cielum
 
