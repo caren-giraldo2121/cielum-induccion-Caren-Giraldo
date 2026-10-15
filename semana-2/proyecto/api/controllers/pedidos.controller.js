@@ -1,8 +1,7 @@
-
 const pedidosService = require('../services/pedidos.service');
 const pedidosQuerySchema = require('../schemas/pedidosQuery.schema');
 
-// Listar pedidos con filtro y paginación
+// Listar pedidos con filtros y paginación
 async function listarPedidos(req, res, next) {
     try {
         const validacion = pedidosQuerySchema.safeParse(req.query);
@@ -17,10 +16,10 @@ async function listarPedidos(req, res, next) {
             });
         }
 
-        const { estado, pagina, limite } = validacion.data;
+        const { estado, id_cliente, desde, hasta, pagina, limite } = validacion.data;
 
         const pedidos = await pedidosService.obtenerPedidos(
-            estado, pagina, limite
+            { estado, id_cliente, desde, hasta }, pagina, limite
         );
 
         res.json({

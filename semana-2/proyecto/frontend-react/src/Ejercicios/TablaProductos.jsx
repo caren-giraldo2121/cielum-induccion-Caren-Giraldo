@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-// Intermedio: fetch "a mano" con carga y error (sin token).
-// En el nivel avanzado esto se reemplaza por useApi("/productos").
+// Intermedio: fetch "a mano" con carga y error.
+// Tu API exige token en /productos, así que se envía en el header.
 export default function TablaProductos() {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +12,10 @@ export default function TablaProductos() {
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    fetch(`${import.meta.env.VITE_API_URL || "/api"}/productos`, { signal: ctrl.signal })
+    fetch(`${import.meta.env.VITE_API_URL || "/api"}/productos`, {
+      signal: ctrl.signal,
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    })
       .then((res) => {
         if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
         return res.json();
@@ -38,8 +41,8 @@ export default function TablaProductos() {
             <thead><tr><th>ID</th><th>Nombre</th><th className="num">Precio</th><th className="num">Stock</th></tr></thead>
             <tbody>
               {productos.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.id}</td><td>{p.nombre}</td>
+                <tr key={p.id_producto}>
+                  <td>{p.id_producto}</td><td>{p.nombre}</td>
                   <td className="num">{Number(p.precio).toLocaleString("es-CO")}</td>
                   <td className="num">{p.stock}</td>
                 </tr>

@@ -2,23 +2,23 @@
 const pool = require('../db');
 
 // Obtener pedidos con filtro y paginación
-async function obtenerPedidos(estado, pagina, limite) {
+async function obtenerPedidos(filtros, pagina, limite) {
     const offset = (pagina - 1) * limite;
-
-    let consulta = 'SELECT * FROM pedidos';
+    const condiciones = [];
     const valores = [];
 
-    if (estado) {
-        consulta += ' WHERE estado = $1';
-        valores.push(estado);
-    }
+    if (filtros.estado)     { valores.push(filtros.estado);     condiciones.push(`estado = $${valores.length}`); }
+    if (filtros.id_cliente) { valores.push(filtros.id_cliente); condiciones.push(`id_cliente = $${valores.length}`); }
+    if (filtros.desde)      { valores.push(filtros.desde);      condiciones.push(`fecha_pedido >= $${valores.length}`); }
+    if (filtros.hasta)      { valores.push(filtros.hasta);      condiciones.push(`fecha_pedido <= $${valores.length}`); }
 
-    consulta += ` ORDER BY id_pedido LIMIT $${valores.length + 1} OFFSET $${valores.length + 2}`;
+    let consulta = 'SELECT * FROM pedidos';
+    if (condiciones.length) consulta += ' WHERE ' + condiciones.join(' AND ');
 
     valores.push(limite, offset);
+    consulta += ` ORDER BY id_pedido LIMIT $${valores.length - 1} OFFSET $${valores.length}`;
 
     const resultado = await pool.query(consulta, valores);
-
     return resultado.rows;
 }
 

@@ -58,7 +58,7 @@ tr:last-child td { border-bottom: 0; }
 .paginacion { display: flex; justify-content: center; align-items: center; gap: 1rem; }
 
 .linea { display: grid; grid-template-columns: 1fr 90px 120px auto; gap: .5rem; margin-bottom: .5rem; align-items: center; }
-.linea-simple { display: flex; gap: .5rem; margin-bottom: .75rem; } .linea-simple input { flex: 1; }
+.linea-simple { display: flex; gap: .5rem; margin-bottom: .75rem; } .linea-simple input { flex: 1; min-width: 0; }
 @media (max-width: 640px) { .linea { grid-template-columns: 1fr 80px; } .subtotal { text-align: left; } }
 .total { text-align: right; font-size: 1.1rem; }
 .acciones { display: flex; justify-content: flex-end; gap: .5rem; }
