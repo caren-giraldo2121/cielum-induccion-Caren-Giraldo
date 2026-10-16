@@ -6,7 +6,7 @@
 
 1. ¿Qué es React y qué es un componente? JSX.
 
-React: es una biblioteca de JavaScript que permite crear interfaces de usuario para páginas y aplicaciones web mediante componentes reutilizables.
+- React: es una biblioteca de JavaScript que permite crear interfaces de usuario para páginas y aplicaciones web mediante componentes reutilizables.
 
 - Componente: es una parte independiente de la interfaz, creada normalmente como una función de JavaScript que devuelve lo que se mostrará en pantalla. Por ejemplo, un botón, una barra de navegación o una tarjeta de producto.
 
