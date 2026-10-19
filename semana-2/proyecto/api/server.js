@@ -1,3 +1,4 @@
+
 const express = require('express');
 require('dotenv').config();
 
@@ -7,8 +8,16 @@ const productosRoutes = require('./routes/productos.routes');
 const pedidosRoutes = require('./routes/pedidos.routes');
 const authRoutes = require('./routes/auth.routes');
 const manejoErrores = require('./middlewares/manejoErrores');
+const cors = require('cors');
+
 
 const app = express();
+
+app.use(cors({
+    origin: ['http://localhost:5173'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 app.use(express.json());
 app.get('/', (req, res) => {

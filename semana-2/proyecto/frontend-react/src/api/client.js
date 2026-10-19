@@ -1,10 +1,11 @@
 const BASE = import.meta.env.VITE_API_URL || "/api";
 
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, detalles) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.detalles = detalles;
   }
 }
 
@@ -17,14 +18,19 @@ function buildUrl(path, params) {
   return `${BASE}${path}${q ? `?${q}` : ""}`;
 }
 
-// Extrae un mensaje legible de las formas de error más comunes (FastAPI, Express, etc.)
+// Extrae un mensaje legible de las formas de error de la API (Express + Zod)
 function extractMessage(body, fallback) {
   if (!body) return fallback;
   if (typeof body === "string") return body;
-  const d = body.detail ?? body.message ?? body.error;
-  if (typeof d === "string") return d;
-  if (Array.isArray(d)) return d.map((e) => e.msg || JSON.stringify(e)).join(". ");
-  return fallback;
+  let msg = body.error ?? body.message ?? fallback;
+  // La API devuelve errores de validación en "detalles": [{campo, mensaje}]
+  if (Array.isArray(body.detalles) && body.detalles.length) {
+    const extra = body.detalles
+      .map((d) => d.mensaje || d.message || JSON.stringify(d))
+      .join(". ");
+    msg = extra ? `${msg}: ${extra}` : msg;
+  }
+  return msg;
 }
 
 export async function apiFetch(path, { method = "GET", body, token, params, signal } = {}) {
@@ -41,7 +47,7 @@ export async function apiFetch(path, { method = "GET", body, token, params, sign
     });
   } catch (e) {
     if (e.name === "AbortError") throw e;
-    throw new ApiError("No se pudo conectar con el servidor. Revisa tu conexión.", 0);
+    throw new ApiError("No se pudo conectar con el servidor. ¿Está encendida la API?", 0);
   }
 
   const text = await res.text();
@@ -57,9 +63,9 @@ export async function apiFetch(path, { method = "GET", body, token, params, sign
       res.status === 401 ? "Sesión no válida o expirada." :
       res.status === 403 ? "No tienes permiso para hacer esto." :
       res.status === 404 ? "No se encontró el recurso." :
-      res.status >= 500 ? "Error del servidor. Inténtalo de nuevo en unos minutos." :
+      res.status >= 500 ? "Error del servidor. Inténtalo de nuevo más tarde." :
       `Error ${res.status}`;
-    throw new ApiError(extractMessage(data, fallback), res.status);
+    throw new ApiError(extractMessage(data, fallback), res.status, data?.detalles);
   }
   return data;
 }

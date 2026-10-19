@@ -1,62 +1,65 @@
 import { useState } from "react";
+import { Mensaje } from "../components/ui.jsx";
 
 const INICIAL = { nombre: "", email: "", rol: "cliente", acepta: false };
 
 export default function FormularioControlado() {
   const [form, setForm] = useState(INICIAL);
   const [errores, setErrores] = useState({});
-  const [enviado, setEnviado] = useState(null);
+  const [enviado, setEnviado] = useState(false);
 
-  function onChange(e) {
-    const { name, value, type, checked } = e.target;
+  const onChange = (e) => {
+    const { name, type, value, checked } = e.target;
     setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
-  }
+  };
 
-  function validar() {
+  const validar = () => {
     const e = {};
-    if (form.nombre.trim().length < 2) e.nombre = "Escribe al menos 2 caracteres.";
+    if (!form.nombre.trim()) e.nombre = "El nombre es obligatorio.";
     if (!/^\S+@\S+\.\S+$/.test(form.email)) e.email = "Correo no válido.";
     if (!form.acepta) e.acepta = "Debes aceptar los términos.";
     return e;
-  }
+  };
 
-  function onSubmit(ev) {
+  const onSubmit = (ev) => {
     ev.preventDefault();
     const e = validar();
     setErrores(e);
-    if (Object.keys(e).length === 0) {
-      setEnviado(form);
-      setForm(INICIAL);
-    }
-  }
+    setEnviado(Object.keys(e).length === 0);
+  };
 
   return (
     <div className="card">
       <h3>Formulario controlado</h3>
-      <form onSubmit={onSubmit} noValidate>
-        <label>Nombre
+      {enviado && <Mensaje tipo="ok">¡Datos válidos! Hola, {form.nombre}.</Mensaje>}
+      <form onSubmit={onSubmit}>
+        <div className="field">
+          <label>Nombre</label>
           <input name="nombre" value={form.nombre} onChange={onChange} />
           {errores.nombre && <small className="error">{errores.nombre}</small>}
-        </label>
-        <label>Correo
+        </div>
+        <div className="field">
+          <label>Correo</label>
           <input name="email" type="email" value={form.email} onChange={onChange} />
           {errores.email && <small className="error">{errores.email}</small>}
-        </label>
-        <label>Rol
+        </div>
+        <div className="field">
+          <label>Rol</label>
           <select name="rol" value={form.rol} onChange={onChange}>
             <option value="cliente">Cliente</option>
             <option value="vendedor">Vendedor</option>
             <option value="admin">Administrador</option>
           </select>
-        </label>
-        <label className="check">
-          <input name="acepta" type="checkbox" checked={form.acepta} onChange={onChange} />
-          <span>Acepto los términos</span>
-        </label>
+        </div>
+        <div className="field tarea" style={{ borderBottom: "none" }}>
+          <input id="acepta" type="checkbox" name="acepta" checked={form.acepta} onChange={onChange} />
+          <label htmlFor="acepta" style={{ margin: 0 }}>Acepto los términos</label>
+        </div>
         {errores.acepta && <small className="error">{errores.acepta}</small>}
-        <button className="btn btn-primary">Enviar</button>
+        <div style={{ marginTop: 12 }}>
+          <button type="submit">Enviar</button>
+        </div>
       </form>
-      {enviado && <pre className="salida">{JSON.stringify(enviado, null, 2)}</pre>}
     </div>
   );
 }

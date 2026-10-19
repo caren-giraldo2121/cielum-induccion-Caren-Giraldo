@@ -1,55 +1,41 @@
-import { useEffect, useState } from "react";
+import { useApi } from "../hooks/useApi.js";
+import { Mensaje, Cargando, EstadoVacio } from "../components/ui.jsx";
 
-// Intermedio: fetch "a mano" con carga y error.
-// Tu API exige token en /productos, así que se envía en el header.
+const moneda = (n) =>
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
+
 export default function TablaProductos() {
-  const [productos, setProductos] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [intento, setIntento] = useState(0);
-
-  useEffect(() => {
-    const ctrl = new AbortController();
-    setLoading(true);
-    setError(null);
-    fetch(`${import.meta.env.VITE_API_URL || "/api"}/productos`, {
-      signal: ctrl.signal,
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error(`El servidor respondió ${res.status}`);
-        return res.json();
-      })
-      .then(setProductos)
-      .catch((e) => { if (e.name !== "AbortError") setError(e.message); })
-      .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
-    return () => ctrl.abort();
-  }, [intento]);
+  // Consume GET /productos (protegido por token) usando el custom hook.
+  const { data: productos, loading, error, refetch } = useApi("/productos");
 
   return (
     <div className="card">
-      <h3>Tabla de productos</h3>
-      {loading && <p>Cargando productos…</p>}
-      {error && (
-        <p className="error" role="alert">
-          {error} <button className="btn" onClick={() => setIntento((n) => n + 1)}>Reintentar</button>
-        </p>
-      )}
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <h3 style={{ margin: 0 }}>Tabla de productos</h3>
+        <button className="secundario sm" onClick={() => refetch()} disabled={loading}>Recargar</button>
+      </div>
+
+      {loading && <Cargando>Cargando productos…</Cargando>}
+      {error && !loading && <Mensaje tipo="error">{error}</Mensaje>}
+
       {!loading && !error && (
-        productos.length === 0 ? <p className="vacio">No hay productos.</p> : (
+        Array.isArray(productos) && productos.length ? (
           <table>
-            <thead><tr><th>ID</th><th>Nombre</th><th className="num">Precio</th><th className="num">Stock</th></tr></thead>
+            <thead>
+              <tr><th>ID</th><th>Nombre</th><th>Precio</th><th>Stock</th></tr>
+            </thead>
             <tbody>
               {productos.map((p) => (
                 <tr key={p.id_producto}>
-                  <td>{p.id_producto}</td><td>{p.nombre}</td>
-                  <td className="num">{Number(p.precio).toLocaleString("es-CO")}</td>
-                  <td className="num">{p.stock}</td>
+                  <td>{p.id_producto}</td>
+                  <td>{p.nombre}</td>
+                  <td>{moneda(p.precio)}</td>
+                  <td>{p.stock}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-        )
+        ) : <EstadoVacio>No hay productos.</EstadoVacio>
       )}
     </div>
   );

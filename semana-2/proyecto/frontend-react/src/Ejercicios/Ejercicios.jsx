@@ -1,19 +1,27 @@
-import Contador from "./Contador";
-import ListaTareas from "./ListaTareas";
-import FormularioControlado from "./FormularioControlado";
-import TablaProductos from "./TablaProductos";
-import Avanzado from "./Avanzado";
+import Contador from "./Contador.jsx";
+import ListaTareas from "./ListaTareas.jsx";
+import FormularioControlado from "./FormularioControlado.jsx";
+import TablaProductos from "./TablaProductos.jsx";
+import Avanzado from "./Avanzado.jsx";
 
 export default function Ejercicios() {
   return (
-    <>
-      <div className="page-head"><h1>Ejercicios del día</h1></div>
-      <h2>Básico</h2>
-      <div className="grid"><Contador /><ListaTareas /><FormularioControlado /></div>
-      <h2>Intermedio</h2>
+    <div>
+      <h1 className="page-title">Ejercicios</h1>
+      <p className="page-sub">Básico, intermedio y avanzado de React integrados con la API.</p>
+
+      <h3 style={{ margin: "18px 0 10px" }}>Básico</h3>
+      <div className="grid-ejercicios">
+        <Contador />
+        <ListaTareas />
+        <FormularioControlado />
+      </div>
+
+      <h3 style={{ margin: "26px 0 10px" }}>Intermedio</h3>
       <TablaProductos />
-      <h2>Avanzado</h2>
+
+      <h3 style={{ margin: "26px 0 10px" }}>Avanzado</h3>
       <Avanzado />
-    </>
+    </div>
   );
 }

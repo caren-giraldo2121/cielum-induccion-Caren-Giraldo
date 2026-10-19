@@ -1,143 +1,169 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useApi, useMutation } from "../hooks/useApi";
-import { useToast } from "../components/Toasts";
+import { useApi } from "../hooks/useApi.js";
+import { useAuth } from "../auth/AuthContext.jsx";
+import { Mensaje, Cargando } from "../components/ui.jsx";
 
-const dinero = (n) => Number(n).toLocaleString("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
-const nuevaLinea = () => ({ key: crypto.randomUUID(), id_producto: "", cantidad: 1 });
+const ESTADOS = ["Pendiente", "Pagado", "Enviado", "Entregado", "Cancelado"];
+const moneda = (n) =>
+  new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
 
-// SUPOSICIÓN: formato del POST /pedidos. Ajusta esta función cuando veas tu controlador.
-const construirBody = (idCliente, lineas, porId) => ({
-  id_cliente: Number(idCliente),
-  estado: "Pendiente",
-  detalles: lineas.map((l) => ({
-    id_producto: Number(l.id_producto),
-    cantidad: Number(l.cantidad),
-    precio_unitario: Number(porId[l.id_producto].precio),
-  })),
-});
+const lineaVacia = () => ({ id_producto: "", cantidad: 1, precio_unitario: "" });
 
 export default function NuevoPedido() {
+  const { authFetch } = useAuth();
   const navigate = useNavigate();
-  const toast = useToast();
-  const prod = useApi("/productos");
-  const cli = useApi("/clientes"); // SUPOSICIÓN: existe GET /clientes con { id_cliente, nombre }
-  const { mutate, loading: enviando } = useMutation("POST");
+
+  const { data: clientes, loading: cargandoClientes, error: errClientes } = useApi("/clientes");
+  const { data: productos, loading: cargandoProductos, error: errProductos } = useApi("/productos");
 
   const [idCliente, setIdCliente] = useState("");
-  const [lineas, setLineas] = useState([nuevaLinea()]);
-  const [errores, setErrores] = useState([]);
+  const [estado, setEstado] = useState("Pendiente");
+  const [detalles, setDetalles] = useState([lineaVacia()]);
+  const [error, setError] = useState("");
+  const [enviando, setEnviando] = useState(false);
 
-  const productos = Array.isArray(prod.data) ? prod.data : [];
-  const clientes = Array.isArray(cli.data) ? cli.data : cli.data?.resultados ?? [];
-  const porId = Object.fromEntries(productos.map((p) => [String(p.id_producto), p]));
+  const listaProductos = Array.isArray(productos) ? productos : [];
+  const listaClientes = Array.isArray(clientes) ? clientes : [];
 
-  const cambiarLinea = (key, campo, valor) =>
-    setLineas((ls) => ls.map((l) => (l.key === key ? { ...l, [campo]: valor } : l)));
-  const quitarLinea = (key) => setLineas((ls) => ls.filter((l) => l.key !== key));
-
-  const total = lineas.reduce((acc, l) => {
-    const p = porId[l.id_producto];
-    return acc + (p ? Number(p.precio) * (Number(l.cantidad) || 0) : 0);
-  }, 0);
-
-  function validar() {
-    const e = [];
-    if (!idCliente) e.push("Elige un cliente.");
-    if (lineas.length === 0) e.push("Agrega al menos un producto.");
-    const vistos = new Set();
-    lineas.forEach((l, i) => {
-      const n = i + 1;
-      const p = porId[l.id_producto];
-      if (!p) return e.push(`Línea ${n}: elige un producto.`);
-      if (vistos.has(l.id_producto)) e.push(`Línea ${n}: "${p.nombre}" ya está en el pedido.`);
-      vistos.add(l.id_producto);
-      const c = Number(l.cantidad);
-      if (!Number.isInteger(c) || c < 1) e.push(`Línea ${n}: la cantidad debe ser un entero mayor a 0.`);
-      else if (c > p.stock) e.push(`Línea ${n}: solo hay ${p.stock} unidades de "${p.nombre}".`);
+  const cambiarLinea = (i, campo, valor) => {
+    setDetalles((prev) => {
+      const copia = prev.map((l) => ({ ...l }));
+      copia[i][campo] = valor;
+      // al elegir producto, autocompleta el precio con el del catálogo
+      if (campo === "id_producto") {
+        const prod = listaProductos.find((p) => String(p.id_producto) === String(valor));
+        if (prod) copia[i].precio_unitario = prod.precio;
+      }
+      return copia;
     });
-    return e;
-  }
+  };
 
-  async function onSubmit(ev) {
-    ev.preventDefault();
-    const e = validar();
-    setErrores(e);
-    if (e.length) return;
-    try {
-      const res = await mutate("/pedidos", construirBody(idCliente, lineas, porId));
-      const id = res?.id_pedido ?? res?.pedido?.id_pedido;
-      toast.ok(id ? `Pedido #${id} creado.` : "Pedido creado.");
-      navigate("/pedidos");
-    } catch (err) {
-      setErrores([err.message]);
-      toast.error("No se pudo crear el pedido.");
+  const agregarLinea = () => setDetalles((prev) => [...prev, lineaVacia()]);
+  const quitarLinea = (i) => setDetalles((prev) => prev.filter((_, idx) => idx !== i));
+
+  const total = detalles.reduce(
+    (acc, l) => acc + (Number(l.cantidad) || 0) * (Number(l.precio_unitario) || 0),
+    0
+  );
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!idCliente) return setError("Selecciona un cliente.");
+    const limpias = detalles.filter((l) => l.id_producto);
+    if (limpias.length === 0) return setError("Agrega al menos un producto.");
+    for (const l of limpias) {
+      if (!(Number(l.cantidad) > 0)) return setError("Las cantidades deben ser mayores que 0.");
+      if (!(Number(l.precio_unitario) > 0)) return setError("Los precios deben ser mayores que 0.");
     }
-  }
 
-  if (prod.loading || cli.loading) return <p>Cargando datos…</p>;
-  const falla = prod.error || cli.error;
-  if (falla) {
-    return (
-      <div className="card error" role="alert">
-        <p>No se pudieron cargar los datos: {falla.message}</p>
-        <button className="btn" onClick={() => { prod.refetch(); cli.refetch(); }}>Reintentar</button>
-      </div>
-    );
-  }
+    const body = {
+      id_cliente: Number(idCliente),
+      estado,
+      detalles: limpias.map((l) => ({
+        id_producto: Number(l.id_producto),
+        cantidad: Number(l.cantidad),
+        precio_unitario: Number(l.precio_unitario),
+      })),
+    };
+
+    setEnviando(true);
+    try {
+      const res = await authFetch("/pedidos", { method: "POST", body });
+      const id = res?.pedido?.id_pedido;
+      navigate("/pedidos", { replace: true, state: { creado: id } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  if (cargandoClientes || cargandoProductos) return <Cargando>Cargando catálogo…</Cargando>;
 
   return (
-    <>
-      <div className="page-head"><h1>Nuevo pedido</h1></div>
-      <form className="card" onSubmit={onSubmit} noValidate>
-        <label>Cliente
-          <select value={idCliente} onChange={(e) => setIdCliente(e.target.value)}>
-            <option value="">Elige un cliente</option>
-            {clientes.map((c) => (
-              <option key={c.id_cliente} value={c.id_cliente}>{c.nombre}</option>
-            ))}
-          </select>
-        </label>
+    <div>
+      <h1 className="page-title">Nuevo pedido</h1>
+      <p className="page-sub">Selecciona el cliente y agrega uno o más productos.</p>
 
-        <fieldset>
-          <legend>Productos</legend>
-          {lineas.map((l, i) => {
-            const p = porId[l.id_producto];
-            return (
-              <div className="linea" key={l.key}>
-                <select aria-label={`Producto de la línea ${i + 1}`} value={l.id_producto}
-                        onChange={(e) => cambiarLinea(l.key, "id_producto", e.target.value)}>
-                  <option value="">Elige un producto</option>
-                  {productos.map((pr) => (
-                    <option key={pr.id_producto} value={pr.id_producto} disabled={pr.stock === 0}>
-                      {pr.nombre} — {dinero(pr.precio)}{pr.stock === 0 ? " (agotado)" : ""}
-                    </option>
-                  ))}
-                </select>
-                <input type="number" min="1" step="1" aria-label={`Cantidad de la línea ${i + 1}`}
-                       value={l.cantidad} onChange={(e) => cambiarLinea(l.key, "cantidad", e.target.value)} />
-                <span className="num subtotal">{p ? dinero(Number(p.precio) * (Number(l.cantidad) || 0)) : "—"}</span>
-                <button type="button" className="btn btn-ghost" onClick={() => quitarLinea(l.key)}
-                        aria-label={`Quitar línea ${i + 1}`}>Quitar</button>
-              </div>
-            );
-          })}
-          <button type="button" className="btn" onClick={() => setLineas((ls) => [...ls, nuevaLinea()])}>
-            Agregar producto
-          </button>
-        </fieldset>
+      {(errClientes || errProductos) && (
+        <Mensaje tipo="error">{errClientes || errProductos}</Mensaje>
+      )}
+      {error && <Mensaje tipo="error">{error}</Mensaje>}
 
-        <p className="total">Total: <strong>{dinero(total)}</strong></p>
+      <form onSubmit={onSubmit}>
+        <div className="card">
+          <div className="row">
+            <div className="field">
+              <label>Cliente</label>
+              <select value={idCliente} onChange={(e) => setIdCliente(e.target.value)}>
+                <option value="">— Selecciona —</option>
+                {listaClientes.map((c) => (
+                  <option key={c.id_cliente} value={c.id_cliente}>
+                    {c.id_cliente} · {c.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field" style={{ maxWidth: 200 }}>
+              <label>Estado</label>
+              <select value={estado} onChange={(e) => setEstado(e.target.value)}>
+                {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
+              </select>
+            </div>
+          </div>
+        </div>
 
-        {errores.length > 0 && (
-          <ul className="error" role="alert">{errores.map((m) => <li key={m}>{m}</li>)}</ul>
-        )}
+        <div className="card">
+          <h3>Productos</h3>
+          <table>
+            <thead>
+              <tr><th>Producto</th><th style={{ width: 110 }}>Cantidad</th><th style={{ width: 150 }}>Precio unit.</th><th style={{ width: 130 }}>Subtotal</th><th></th></tr>
+            </thead>
+            <tbody>
+              {detalles.map((l, i) => (
+                <tr key={i}>
+                  <td>
+                    <select value={l.id_producto} onChange={(e) => cambiarLinea(i, "id_producto", e.target.value)}>
+                      <option value="">— Producto —</option>
+                      {listaProductos.map((p) => (
+                        <option key={p.id_producto} value={p.id_producto}>{p.nombre}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <input type="number" min="1" value={l.cantidad}
+                           onChange={(e) => cambiarLinea(i, "cantidad", e.target.value)} />
+                  </td>
+                  <td>
+                    <input type="number" min="0" step="0.01" value={l.precio_unitario}
+                           onChange={(e) => cambiarLinea(i, "precio_unitario", e.target.value)} />
+                  </td>
+                  <td>{moneda((Number(l.cantidad) || 0) * (Number(l.precio_unitario) || 0))}</td>
+                  <td>
+                    {detalles.length > 1 && (
+                      <button type="button" className="secundario sm" onClick={() => quitarLinea(i)}>✕</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ marginTop: 12 }}>
+            <button type="button" className="secundario sm" onClick={agregarLinea}>+ Agregar producto</button>
+          </div>
+          <div className="row" style={{ justifyContent: "flex-end", marginTop: 14, fontWeight: 700 }}>
+            Total: {moneda(total)}
+          </div>
+        </div>
 
-        <div className="acciones">
-          <button type="button" className="btn btn-ghost" onClick={() => navigate("/pedidos")}>Cancelar</button>
-          <button className="btn btn-primary" disabled={enviando}>{enviando ? "Guardando…" : "Crear pedido"}</button>
+        <div className="row">
+          <button type="submit" disabled={enviando}>{enviando ? "Creando…" : "Crear pedido"}</button>
+          <button type="button" className="secundario" onClick={() => navigate("/pedidos")}>Cancelar</button>
         </div>
       </form>
-    </>
+    </div>
   );
 }

@@ -1,61 +1,42 @@
 import { useState } from "react";
 
 export default function ListaTareas() {
+  const [tareas, setTareas] = useState([
+    { id: 1, texto: "Levantar la API", hecha: true },
+    { id: 2, texto: "Conectar el frontend", hecha: false },
+  ]);
   const [texto, setTexto] = useState("");
-  const [tareas, setTareas] = useState([]);
 
-  function agregar() {
+  const agregar = (e) => {
+    e.preventDefault();
     const t = texto.trim();
     if (!t) return;
-    const id = Math.max(0, ...tareas.map((x) => x.id)) + 1;
-    setTareas([...tareas, { id, texto: t, hecha: false }]);
+    setTareas((prev) => [...prev, { id: Date.now(), texto: t, hecha: false }]);
     setTexto("");
-  }
+  };
 
-  function alternar(id) {
-    setTareas(tareas.map((t) => (t.id === id ? { ...t, hecha: !t.hecha } : t)));
-  }
+  const alternar = (id) =>
+    setTareas((prev) => prev.map((t) => (t.id === id ? { ...t, hecha: !t.hecha } : t)));
 
-  function borrar(id) {
-    setTareas(tareas.filter((t) => t.id !== id));
-  }
-
-  const pendientes = tareas.filter((t) => !t.hecha).length;
+  const eliminar = (id) => setTareas((prev) => prev.filter((t) => t.id !== id));
 
   return (
     <div className="card">
-      <h3>Lista de tareas (v2)</h3>
-
-      <div className="linea-simple">
-        <input
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") agregar(); }}
-          placeholder="Nueva tarea"
-          aria-label="Nueva tarea"
-        />
-        <button type="button" className="btn btn-primary" onClick={agregar}>
-          Agregar
-        </button>
+      <h3>Lista de tareas</h3>
+      <form className="row" onSubmit={agregar}>
+        <input placeholder="Nueva tarea…" value={texto} onChange={(e) => setTexto(e.target.value)} />
+        <button type="submit">Agregar</button>
+      </form>
+      <div style={{ marginTop: 12 }}>
+        {tareas.length === 0 && <p className="estado-vacio">Sin tareas.</p>}
+        {tareas.map((t) => (
+          <div key={t.id} className={`tarea ${t.hecha ? "hecha" : ""}`}>
+            <input type="checkbox" checked={t.hecha} onChange={() => alternar(t.id)} />
+            <span>{t.texto}</span>
+            <button className="secundario sm" onClick={() => eliminar(t.id)}>Quitar</button>
+          </div>
+        ))}
       </div>
-
-      {tareas.length === 0 ? (
-        <p className="vacio">Aún no hay tareas.</p>
-      ) : (
-        <ul className="tareas">
-          {tareas.map((t) => (
-            <li key={t.id}>
-              <label className="check">
-                <input type="checkbox" checked={t.hecha} onChange={() => alternar(t.id)} />
-                <span style={{ textDecoration: t.hecha ? "line-through" : "none" }}>{t.texto}</span>
-              </label>
-              <button type="button" className="btn btn-ghost" onClick={() => borrar(t.id)}>Borrar</button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <p className="muted">{pendientes} pendiente(s) de {tareas.length}</p>
     </div>
   );
 }

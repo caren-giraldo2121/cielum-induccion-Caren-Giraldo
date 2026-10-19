@@ -1,62 +1,46 @@
 import { useCallback, useEffect, useState } from "react";
-import { apiFetch } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/AuthContext.jsx";
 
 /**
- * Lectura (GET) con token, carga y error.
- *   const { data, loading, error, refetch } = useApi("/pedidos", { page: 1 });
- * - Cancela la petición anterior si cambian path/params o se desmonta.
- * - Si el servidor responde 401, cierra la sesión.
+ * Custom hook de datos con token.
+ * - Hace la petición autenticada y expone { data, loading, error, refetch }.
+ * - Por defecto (auto=true) ejecuta un GET al montar y cuando cambian los params.
  */
-export function useApi(path, params, { enabled = true } = {}) {
-  const { token, logout } = useAuth();
-  const [state, setState] = useState({ data: null, loading: enabled, error: null });
-  const [tick, setTick] = useState(0);
-  const paramsKey = JSON.stringify(params ?? {});
+export function useApi(path, { auto = true, method = "GET", params, body } = {}) {
+  const { authFetch } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(auto);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const ctrl = new AbortController();
-    setState((s) => ({ ...s, loading: true, error: null }));
+  const paramsKey = JSON.stringify(params || {});
 
-    apiFetch(path, { params: JSON.parse(paramsKey), token, signal: ctrl.signal })
-      .then((data) => setState({ data, loading: false, error: null }))
-      .catch((err) => {
-        if (err.name === "AbortError") return;
-        if (err.status === 401) logout();
-        setState({ data: null, loading: false, error: err });
-      });
-
-    return () => ctrl.abort();
-  }, [path, paramsKey, token, enabled, tick, logout]);
-
-  const refetch = useCallback(() => setTick((t) => t + 1), []);
-  return { ...state, refetch };
-}
-
-/**
- * Escritura (POST/PATCH/DELETE) con token.
- *   const { mutate, loading } = useMutation("PATCH");
- *   await mutate("/pedidos/3", { estado: "enviado" });   // lanza ApiError si falla
- */
-export function useMutation(method = "POST") {
-  const { token, logout } = useAuth();
-  const [loading, setLoading] = useState(false);
-
-  const mutate = useCallback(
-    async (path, body) => {
+  const execute = useCallback(
+    async (override = {}) => {
       setLoading(true);
+      setError(null);
       try {
-        return await apiFetch(path, { method, body, token });
+        const res = await authFetch(path, { method, params, body, ...override });
+        setData(res);
+        return res;
       } catch (err) {
-        if (err.status === 401) logout();
+        if (err.name === "AbortError") return;
+        setError(err.message || "Ocurrió un error");
         throw err;
       } finally {
         setLoading(false);
       }
     },
-    [method, token, logout]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [authFetch, path, method, paramsKey]
   );
 
-  return { mutate, loading };
+  useEffect(() => {
+    if (!auto) return;
+    const ctrl = new AbortController();
+    execute({ signal: ctrl.signal }).catch(() => {});
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, execute]);
+
+  return { data, loading, error, refetch: execute, execute };
 }

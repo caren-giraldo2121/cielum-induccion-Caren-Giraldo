@@ -1,9 +1,14 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { Navigate, useLocation } from "react-router-dom";
+import { useAuth } from "./AuthContext.jsx";
 
-export default function RutaProtegida() {
-  const { isAuth } = useAuth();
+// Envuelve rutas privadas: sin token redirige a /login guardando el destino.
+export default function RutaProtegida({ children }) {
+  const { estaAutenticado } = useAuth();
   const location = useLocation();
-  if (!isAuth) return <Navigate to="/login" replace state={{ from: location }} />;
-  return <Outlet />;
+
+  if (!estaAutenticado) {
+    const redirect = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?redirect=${redirect}`} replace />;
+  }
+  return children;
 }
