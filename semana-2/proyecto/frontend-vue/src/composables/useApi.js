@@ -1,45 +1,44 @@
-import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth'
+import { ref, watch, onUnmounted, toValue } from "vue";
+import { useAuthStore } from "../stores/auth.js";
 
-export async function request(path, options = {}) {
-  const auth = useAuthStore()
-  const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(auth.token && { Authorization: `Bearer ${auth.token}` }),
-      ...options.headers,
-    },
-  })
-  if (res.status === 401) {
-    auth.logout()
-    throw new Error('Sesión expirada')
-  }
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error(body.message || `Error ${res.status}`)
-  }
-  return res.json()
-}
+/**
+ * Composable de datos con token.
+ * Devuelve { data, loading, error, execute }.
+ * Si auto=true hace el GET al montar y otra vez cuando cambian los params (reactivos).
+ */
+export function useApi(path, { auto = true, params } = {}) {
+  const auth = useAuthStore();
+  const data = ref(null);
+  const loading = ref(auto);
+  const error = ref("");
+  let ctrl = null;
 
-export function useApi() {
-  const data = ref(null)
-  const loading = ref(false)
-  const error = ref('')
-
-  async function execute(path, options) {
-    loading.value = true
-    error.value = ''
+  async function execute(opts = {}) {
+    ctrl?.abort();
+    ctrl = new AbortController();
+    loading.value = true;
+    error.value = "";
     try {
-      data.value = await request(path, options)
-      return data.value
-    } catch (e) {
-      error.value = e.message
-      throw e
-    } finally {
-      loading.value = false
+      const res = await auth.authFetch(toValue(path), {
+        params: toValue(params),
+        signal: ctrl.signal,
+        ...opts,
+      });
+      data.value = res;
+      loading.value = false;
+      return res;
+    } catch (err) {
+      if (err.name === "AbortError") return; // cancelada: no es error
+      error.value = err.message || "Ocurrió un error";
+      loading.value = false;
+      throw err;
     }
   }
 
-  return { data, loading, error, execute }
+  if (auto) {
+    watch(() => JSON.stringify(toValue(params) || {}), () => execute().catch(() => {}), { immediate: true });
+  }
+  onUnmounted(() => ctrl?.abort());
+
+  return { data, loading, error, execute };
 }

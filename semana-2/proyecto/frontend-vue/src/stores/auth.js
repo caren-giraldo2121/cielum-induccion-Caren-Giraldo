@@ -1,31 +1,42 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { apiFetch, ApiError } from "../api/client.js";
 
-export const useAuthStore = defineStore('auth', () => {
-  const user = ref(JSON.parse(localStorage.getItem('user') || 'null'))
-  const token = ref(localStorage.getItem('token') || '')
-  const isAuthenticated = computed(() => !!token.value)
+function leer(clave) {
+  try { return JSON.parse(localStorage.getItem(clave)); } catch { return null; }
+}
+
+// Store global con el usuario y el token (avanzado: Pinia)
+export const useAuthStore = defineStore("auth", () => {
+  const token = ref(localStorage.getItem("cielum_token") || null);
+  const usuario = ref(leer("cielum_usuario"));
+  const estaAutenticado = computed(() => !!token.value);
 
   async function login(email, password) {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    if (!res.ok) throw new Error('Credenciales inválidas')
-    const data = await res.json()
-    user.value = data.user
-    token.value = data.token
-    localStorage.setItem('user', JSON.stringify(data.user))
-    localStorage.setItem('token', data.token)
+    const data = await apiFetch("/auth/login", { method: "POST", body: { email, password } });
+    token.value = data.token;
+    usuario.value = data.usuario;
+    localStorage.setItem("cielum_token", data.token);
+    localStorage.setItem("cielum_usuario", JSON.stringify(data.usuario));
+    return data.usuario;
   }
 
   function logout() {
-    user.value = null
-    token.value = ''
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
+    token.value = null;
+    usuario.value = null;
+    localStorage.removeItem("cielum_token");
+    localStorage.removeItem("cielum_usuario");
   }
 
-  return { user, token, isAuthenticated, login, logout }
-})
+  // Petición autenticada: envía el token y cierra sesión si la API responde 401
+  async function authFetch(path, opts = {}) {
+    try {
+      return await apiFetch(path, { ...opts, token: token.value });
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) logout();
+      throw err;
+    }
+  }
+
+  return { token, usuario, estaAutenticado, login, logout, authFetch };
+});

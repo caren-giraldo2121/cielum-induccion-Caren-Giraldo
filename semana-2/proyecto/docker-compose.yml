@@ -4,7 +4,7 @@ services:
     container_name: cian_api
     hostname: backend
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - PORT=3000
       - DB_HOST=postgres
@@ -56,6 +56,19 @@ services:
         VITE_API_URL: /api
     ports:
       - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - red-cielum
+
+  frontend-vue:
+    build:
+      context: ./frontend-vue
+      args:
+        VITE_API_URL: /api
+    ports:
+      - "5174:80"
     depends_on:
       - api
     restart: unless-stopped

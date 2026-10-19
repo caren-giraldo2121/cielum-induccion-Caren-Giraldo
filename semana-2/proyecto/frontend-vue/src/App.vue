@@ -1,25 +1,37 @@
 <script setup>
-import { watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from './stores/auth'
-import Toasts from './components/Toasts.vue'
+import { watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "./stores/auth.js";
 
-const auth = useAuthStore()
-const router = useRouter()
+const auth = useAuthStore();
+const router = useRouter();
+const route = useRoute();
 
-// Si el token desaparece (logout o 401), vuelve al login
-watch(() => auth.isAuthenticated, (ok) => {
-  if (!ok) router.push({ name: 'login' })
-})
+// Si el token desaparece (logout o expiró), vuelve al login
+watch(() => auth.estaAutenticado, (ok) => {
+  if (!ok && route.meta.requiereAuth) router.push({ name: "login" });
+});
+
+function salir() {
+  auth.logout();
+  router.push({ name: "login" });
+}
 </script>
 
 <template>
-  <nav v-if="auth.isAuthenticated">
-    <RouterLink to="/">Pedidos</RouterLink> |
-    <RouterLink to="/pedidos/nuevo">Nuevo pedido</RouterLink> |
-    <span>{{ auth.user?.nombre ?? auth.user?.name }}</span>
-    <button @click="auth.logout()">Salir</button>
-  </nav>
-  <RouterView />
-  <Toasts />
+  <template v-if="auth.estaAutenticado && route.name !== 'login'">
+    <header class="navbar">
+      <div class="brand">Cielum · Vue</div>
+      <nav>
+        <RouterLink to="/pedidos" active-class="" exact-active-class="activo">Pedidos</RouterLink>
+        <RouterLink to="/pedidos/nuevo" exact-active-class="activo">Nuevo pedido</RouterLink>
+        <RouterLink to="/ejercicios" exact-active-class="activo">Ejercicios</RouterLink>
+      </nav>
+      <div class="spacer" />
+      <span class="usuario">{{ auth.usuario?.nombre }}</span>
+      <button class="secundario sm" @click="salir">Salir</button>
+    </header>
+    <div class="container"><RouterView /></div>
+  </template>
+  <RouterView v-else />
 </template>
