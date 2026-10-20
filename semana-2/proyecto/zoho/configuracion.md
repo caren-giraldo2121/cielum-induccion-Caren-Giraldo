@@ -43,9 +43,9 @@ Pasos: **Leads → ⋯ → Importar leads → Desde archivo** → subir el CSV �
 
 > Crea primero el campo **Origen Cielum** (sección 3) para que la última columna se pueda mapear.
 
-> La captura del mapeo no se guardó en el momento de la importación; la evidencia de que funcionó es el listado de leads importados (captura 04).
+> La captura del mapeo no se guardó en el momento de la importación; la evidencia de que funcionó es el listado de leads importados (captura 03).
 
-![Leads importados](capturas/04-leads-importados.png)
+![Leads importados](capturas/03-leads-importados.png)
 
 ---
 
@@ -62,7 +62,7 @@ Pasos: **Leads → ⋯ → Importar leads → Desde archivo** → subir el CSV �
 
 El nombre de API se ve en **Módulos y campos → Leads → Campos**. Es el que usan la API y Postman.
 
-![Campo Origen Cielum](capturas/05-campo-origen.png)
+![Campo Origen Cielum](capturas/04-campo-origen.png)
 
 ---
 
@@ -76,8 +76,8 @@ El nombre de API se ve en **Módulos y campos → Leads → Campos**. Es el que 
 | Criterio | Origen Cielum **es** Web |
 | Columnas | Nombre, Empresa, Correo, Ciudad, Origen Cielum, Hora de creación |
 
-![Vista config](capturas/06-vista-config.png)
-![Vista resultado](capturas/07-vista-resultado.png)
+![Vista config](capturas/05-vista-config.png)
+![Vista resultado](capturas/06-vista-resultado.png)
 
 ---
 
@@ -104,8 +104,8 @@ Configuración de la tarea:
 
 **Prueba:** se creó un lead con origen *Web* y apareció la tarea en **Actividades → Tareas** y en la ficha del lead. Al crear uno con origen *Referido*, no se generó tarea.
 
-![Workflow](capturas/08-workflow-regla.png)
-![Tarea creada](capturas/09-workflow-tarea.png)
+![Workflow](capturas/07-workflow-regla.png)
+![Tarea creada](capturas/08-workflow-tarea.png)
 
 ---
 
@@ -116,7 +116,7 @@ Configuración de la tarea:
 1. Ir a [api-console.zoho.com](https://api-console.zoho.com/) → **Add Client → Self Client → Create**.
 2. Copiar **Client ID** y **Client Secret** (pestaña *Client Secret*).
 
-![Self Client (Client Secret tapado)](capturas/10-self-client.png)
+![Self Client (Client Secret tapado)](capturas/09-self-client.png)
 
 ### 6.2 Generar el grant code
 
@@ -162,8 +162,8 @@ Por eso se puede trabajar horas sin regenerar nada a mano.
 | Buscar por email | `GET /crm/v8/Leads/search?email=...` | Encuentra el lead por correo. |
 | Buscar por Origen Cielum | `GET /crm/v8/Leads/search?criteria=(Origen_Cielum:equals:Web)` | Filtra por el campo personalizado. |
 
-![Postman: crear lead](capturas/11-postman-crear.png)
-![Postman: buscar lead por email](capturas/12-postman-buscar.png)
+![Postman: crear lead](capturas/10-postman-crear.png)
+![Postman: buscar lead por email](capturas/11-postman-buscar.png)
 
 > **Seguridad:** la colección y el entorno del repo **no tienen tokens reales**. Los valores se ponen solo en *Current value* de Postman, que no se exporta. Nunca subas un entorno exportado con valores.
 
@@ -186,14 +186,14 @@ Esto indica que **la edición de la cuenta de prueba no incluye funciones Deluge
 
 | Parte | Evidencia |
 |---|---|
-| Campos *Ultimo Deal* (`Ultimo_Deal`) y *Monto ultimo Deal* (`Monto_ultimo_Deal`) en Contacts | `capturas/21-campos-contacts.png` |
+| Campos *Ultimo Deal* (`Ultimo_Deal`) y *Monto ultimo Deal* (`Monto_ultimo_Deal`) en Contacts | `capturas/12-campos-contacts.png` |
 | Código de la función, comentado | `deluge/actualizar_contacto_desde_deal.dg` |
 | Documentación: instalación, workflow y pruebas | `deluge/README.md` |
 | Prueba de la misma lógica por API: se creó un Deal asociado a un contacto y luego se actualizaron los dos campos del contacto con `PUT /Contacts/{id}` | Postman: *Crear deal* (201) y *Actualizar contacto* (200) |
 
-![Campos en Contacts](capturas/21-campos-contacts.png)
+![Campos en Contacts](capturas/12-campos-contacts.png)
 
-![Error al crear la función](capturas/15-error-funcion.png)
+![Error al crear la función](capturas/13-error-funcion.png)
 
 ---
 
@@ -216,7 +216,7 @@ Después se buscó la opción de funciones por otros caminos: en **Configuració
 
 **Cómo se manejó:** se dejó la función para el final y se siguió con lo demás. El código quedó listo y documentado en [`deluge/actualizar_contacto_desde_deal.dg`](deluge/actualizar_contacto_desde_deal.dg) y [`deluge/README.md`](deluge/README.md), para instalarlo en una cuenta que sí tenga funciones (edición Enterprise o su prueba gratuita).
 
-![Error al crear la función](capturas/15-error-funcion.png)
+![Error al crear la función](capturas/13-error-funcion.png)
 
 ### 8.2 El nombre del campo del monto estaba mal escrito en el código
 
@@ -226,7 +226,7 @@ Después se buscó la opción de funciones por otros caminos: en **Configuració
 
 **Cómo se solucionó:** se revisó el nombre real en Zoho y se corrigió en el código y en el README.
 
-![Campos en Contacts](capturas/21-campos-contacts.png)
+![Campos en Contacts](capturas/12-campos-contacts.png)
 
 ### 8.3 La colección de Postman no aparecía
 
@@ -244,27 +244,10 @@ Después se buscó la opción de funciones por otros caminos: en **Configuració
 
 **Cómo se solucionó:** se ignoró la alerta. No se usó "Secure All", porque eso cambia la configuración y podía dañar la autenticación.
 
-![Alerta de secretos](capturas/20-postman-secrets.png)
+![Alerta de secretos](capturas/14-postman-secrets.png)
 
-### 8.5 Las peticiones no tenían dirección (URL)
 
-**Qué pasó:** al abrir "Generar tokens" y "Listar leads", el espacio de la dirección estaba vacío.
-
-**Por qué:** la colección se había armado sin las direcciones completas.
-
-**Cómo se solucionó:** se escribió la dirección correcta en cada una. Por ejemplo, para pedir los tokens: `https://accounts.zoho.com/oauth/v2/token`.
-
-### 8.6 Error "ENOTFOUND {{base_url}}"
-
-**Qué pasó:** Postman no podía enviar la petición y mostraba ese mensaje.
-
-**Por qué:** la dirección usaba una variable llamada `base_url` que **no existía**. Es como mandar una carta a "la dirección de siempre" sin haber escrito nunca cuál es esa dirección. Además, la petición no estaba guardada dentro de la colección, así que no podía ver sus variables.
-
-**Cómo se solucionó:** se guardó la petición dentro de la colección `zoho-crm` y se usó la dirección completa `https://www.zohoapis.com/crm/v6/...`.
-
-![ENOTFOUND](capturas/17-postman-enotfound.png)
-
-### 8.7 Error "INVALID_TOKEN" (token vencido)
+### 8.6 Error "INVALID_TOKEN" (token vencido)
 
 **Qué pasó:** peticiones que antes funcionaban empezaron a fallar.
 
@@ -284,7 +267,7 @@ Después se buscó la opción de funciones por otros caminos: en **Configuració
 
 **Lección:** al copiar una petición, revisar siempre esas dos pestañas.
 
-![Falta el header Authorization](capturas/18-postman-auth-failure.png)
+![Falta el header Authorization](capturas/15-postman-auth-failure.png)
 
 ### 8.9 "204 No Content" al listar contactos
 
@@ -294,7 +277,7 @@ Después se buscó la opción de funciones por otros caminos: en **Configuració
 
 **Cómo se solucionó:** se creó un contacto con "Crear contacto" y al volver a listar ya respondió 200 con el contacto.
 
-![204 No Content](capturas/19-postman-204.png)
+![204 No Content](capturas/16-postman-204.png)
 
 ### 8.10 Error "DUPLICATE_DATA" al crear un contacto
 
@@ -304,7 +287,7 @@ Después se buscó la opción de funciones por otros caminos: en **Configuració
 
 **Cómo se solucionó:** se cambió el correo por uno que se genera distinto cada vez: `prueba.{{$timestamp}}@ejemplo.com`.
 
-![Duplicado](capturas/16-postman-duplicado.png)
+![Duplicado](capturas/17-postman-duplicado.png)
 
 ### Resumen rápido
 
