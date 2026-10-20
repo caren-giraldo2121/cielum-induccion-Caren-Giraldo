@@ -2,7 +2,7 @@
 
 Este documento registra cómo quedó configurada la cuenta de prueba de Zoho CRM: leads, campo personalizado, vista, workflow, Self Client y la función Deluge.
 
-> Las capturas van en la carpeta `capturas/`. Donde dice **📸** hay que pegar la imagen con el nombre indicado.
+> Las capturas están en la carpeta `capturas/`.
 
 ---
 
@@ -11,8 +11,6 @@ Este documento registra cómo quedó configurada la cuenta de prueba de Zoho CRM
 - Cuenta creada en [zoho.com/crm](https://www.zoho.com/crm/) con la edición de prueba gratuita.
 - Centro de datos: **US** (`accounts.zoho.com` / `www.zohoapis.com`).
 - Organización: *Cielum Pruebas*.
-
-📸 `capturas/01-cuenta.png`: pantalla de inicio del CRM con el nombre de la organización.
 
 ![Cuenta](capturas/01-cuenta.png)
 
@@ -23,8 +21,6 @@ Este documento registra cómo quedó configurada la cuenta de prueba de Zoho CRM
 ### 2.1 Creados a mano
 
 Se crearon leads desde **Leads → Crear lead** con nombre, empresa, correo, teléfono, ciudad y **Origen Cielum**.
-
-📸 `capturas/02-lead-manual.png`: formulario de un lead creado a mano.
 
 ![Lead manual](capturas/02-lead-manual.png)
 
@@ -47,8 +43,6 @@ Pasos: **Leads → ⋯ → Importar leads → Desde archivo** → subir el CSV �
 
 > Crea primero el campo **Origen Cielum** (sección 3) para que la última columna se pueda mapear.
 
-📸 `capturas/04-leads-importados.png`: listado con los 10 leads.
-
 > La captura del mapeo no se guardó en el momento de la importación; la evidencia de que funcionó es el listado de leads importados (captura 04).
 
 ![Leads importados](capturas/04-leads-importados.png)
@@ -68,8 +62,6 @@ Pasos: **Leads → ⋯ → Importar leads → Desde archivo** → subir el CSV �
 
 El nombre de API se ve en **Módulos y campos → Leads → Campos**. Es el que usan la API y Postman.
 
-📸 `capturas/05-campo-origen.png`: configuración del campo con sus 3 opciones.
-
 ![Campo Origen Cielum](capturas/05-campo-origen.png)
 
 ---
@@ -83,9 +75,6 @@ El nombre de API se ve en **Módulos y campos → Leads → Campos**. Es el que 
 | Nombre | Leads desde Web |
 | Criterio | Origen Cielum **es** Web |
 | Columnas | Nombre, Empresa, Correo, Ciudad, Origen Cielum, Hora de creación |
-
-📸 `capturas/06-vista-config.png`: criterio de la vista.
-📸 `capturas/07-vista-resultado.png`: vista mostrando solo leads con origen Web.
 
 ![Vista config](capturas/06-vista-config.png)
 ![Vista resultado](capturas/07-vista-resultado.png)
@@ -115,9 +104,6 @@ Configuración de la tarea:
 
 **Prueba:** se creó un lead con origen *Web* y apareció la tarea en **Actividades → Tareas** y en la ficha del lead. Al crear uno con origen *Referido*, no se generó tarea.
 
-📸 `capturas/08-workflow-regla.png`: regla con condición y acción.
-📸 `capturas/09-workflow-tarea.png`: tarea creada automáticamente en el lead.
-
 ![Workflow](capturas/08-workflow-regla.png)
 ![Tarea creada](capturas/09-workflow-tarea.png)
 
@@ -130,7 +116,7 @@ Configuración de la tarea:
 1. Ir a [api-console.zoho.com](https://api-console.zoho.com/) → **Add Client → Self Client → Create**.
 2. Copiar **Client ID** y **Client Secret** (pestaña *Client Secret*).
 
-📸 `capturas/10-self-client.png`: Self Client creado (**tapa el Client Secret** antes de la captura).
+![Self Client (Client Secret tapado)](capturas/10-self-client.png)
 
 ### 6.2 Generar el grant code
 
@@ -176,8 +162,8 @@ Por eso se puede trabajar horas sin regenerar nada a mano.
 | Buscar por email | `GET /crm/v8/Leads/search?email=...` | Encuentra el lead por correo. |
 | Buscar por Origen Cielum | `GET /crm/v8/Leads/search?criteria=(Origen_Cielum:equals:Web)` | Filtra por el campo personalizado. |
 
-📸 `capturas/11-postman-crear.png`: respuesta 201 al crear el lead.
-📸 `capturas/12-postman-buscar.png`: respuesta de la búsqueda.
+![Postman: crear lead](capturas/11-postman-crear.png)
+![Postman: buscar lead por email](capturas/12-postman-buscar.png)
 
 > **Seguridad:** la colección y el entorno del repo **no tienen tokens reales**. Los valores se ponen solo en *Current value* de Postman, que no se exporta. Nunca subas un entorno exportado con valores.
 
@@ -207,7 +193,7 @@ Esto indica que **la edición de la cuenta de prueba no incluye funciones Deluge
 
 ![Campos en Contacts](capturas/21-campos-contacts.png)
 
-![Opción Funciones no disponible](capturas/15-error-funcion.png)
+![Error al crear la función](capturas/15-error-funcion.png)
 
 ---
 
@@ -217,15 +203,20 @@ En esta sección se explica, en palabras sencillas, cada problema que apareció 
 
 ### 8.1 Zoho no dejaba crear la función Deluge
 
-**Qué pasó:** al intentar crear la función desde el workflow, la ventana de "Configurar función" se quedaba trabada y no permitía escribir el código. En la consola del navegador aparecía un error 500.
+**Qué pasó:** para crear la función se siguió este camino:
 
-**Por qué:** el error 500 quiere decir que **el problema era del servidor de Zoho**, no de algo que hiciéramos mal. Puede deberse a una falla temporal de Zoho o a que la edición de la cuenta tiene limitaciones para funciones.
+1. **Configuración → Automatización → Reglas de flujo de trabajo → Crear regla** (módulo Tratos).
+2. En **Acciones instantáneas → Función**, se eligió **Escriba la suya propia** para crear la función desde cero.
 
-**Cómo se manejó:** se dejó la función para el final y se siguió con lo demás. El código ya está listo en [`deluge/actualizar_contacto_desde_deal.dg`](deluge/actualizar_contacto_desde_deal.dg). Las alternativas para volver a intentarlo son: crear la función desde **Configuración → Automatización → Acciones → Funciones** (y no desde el workflow), recargar la página, o probar en una ventana de incógnito.
+En ese punto la ventana de "Configurar función" se quedaba trabada y no dejaba escribir el código. En la consola del navegador aparecía un error 500.
 
-📸 `capturas/15-error-funcion.png`
+Después se buscó la opción de funciones por otros caminos: en **Configuración → Automatización → Acciones** solo aparecen las pestañas *Notificaciones de correo, Tareas, Actualizaciones de campos, Webhooks* y *Acciones de Zoho Flow* (no hay **Funciones**), y tampoco aparece en el Espacio para desarrolladores.
 
-![Error función](capturas/15-error-funcion.png)
+**Por qué:** el error 500 quiere decir que el problema venía **del lado de Zoho**, no de algo que hiciéramos mal. Como la opción de funciones no aparece en ningún menú, lo más probable es que **la edición de esta cuenta de prueba no incluya funciones Deluge**.
+
+**Cómo se manejó:** se dejó la función para el final y se siguió con lo demás. El código quedó listo y documentado en [`deluge/actualizar_contacto_desde_deal.dg`](deluge/actualizar_contacto_desde_deal.dg) y [`deluge/README.md`](deluge/README.md), para instalarlo en una cuenta que sí tenga funciones (edición Enterprise o su prueba gratuita).
+
+![Error al crear la función](capturas/15-error-funcion.png)
 
 ### 8.2 El nombre del campo del monto estaba mal escrito en el código
 
@@ -312,8 +303,6 @@ En esta sección se explica, en palabras sencillas, cada problema que apareció 
 **Por qué:** Zoho **no permite dos contactos con el mismo correo**. Como el contacto ya se había creado antes, lo rechazó para evitar duplicados. Esto demuestra que la validación de Zoho funciona.
 
 **Cómo se solucionó:** se cambió el correo por uno que se genera distinto cada vez: `prueba.{{$timestamp}}@ejemplo.com`.
-
-📸 `capturas/16-postman-duplicado.png`
 
 ![Duplicado](capturas/16-postman-duplicado.png)
 
