@@ -47,10 +47,10 @@ Pasos: **Leads → ⋯ → Importar leads → Desde archivo** → subir el CSV �
 
 > Crea primero el campo **Origen Cielum** (sección 3) para que la última columna se pueda mapear.
 
-📸 `capturas/03-importacion-mapeo.png`: pantalla de mapeo de columnas.
 📸 `capturas/04-leads-importados.png`: listado con los 10 leads.
 
-![Mapeo](capturas/03-importacion-mapeo.png)
+> La captura del mapeo no se guardó en el momento de la importación; la evidencia de que funcionó es el listado de leads importados (captura 04).
+
 ![Leads importados](capturas/04-leads-importados.png)
 
 ---
@@ -190,8 +190,147 @@ Al **crear un Deal**, una función copia el nombre y el monto del Deal a los cam
 - Código: [`deluge/actualizar_contacto_desde_deal.dg`](deluge/actualizar_contacto_desde_deal.dg)
 - Documentación, instalación y pruebas: [`deluge/README.md`](deluge/README.md)
 
-📸 `capturas/13-deluge-funcion.png`: editor de la función con el código.
-📸 `capturas/14-deluge-resultado.png`: Contact con los campos llenos después de crear el Deal.
+### Estado: escrita y documentada, pendiente de instalar
+
+La función **no se pudo instalar en la cuenta**: en *Configuración → Automatización → Acciones* no existe la pestaña **Funciones** (solo aparecen Notificaciones de correo, Tareas, Actualizaciones de campos, Webhooks y Zoho Flow), y tampoco aparece en el Espacio para desarrolladores. Al intentar crearla desde el workflow, Zoho devolvió error 500 (ver sección 8.1).
+
+Esto indica que **la edición de la cuenta de prueba no incluye funciones Deluge**. En una cuenta con edición Enterprise (o su prueba gratuita) se instala siguiendo [`deluge/README.md`](deluge/README.md).
+
+**Lo que sí quedó hecho:**
+
+| Parte | Evidencia |
+|---|---|
+| Campos *Ultimo Deal* (`Ultimo_Deal`) y *Monto ultimo Deal* (`Monto_ultimo_Deal`) en Contacts | `capturas/21-campos-contacts.png` |
+| Código de la función, comentado | `deluge/actualizar_contacto_desde_deal.dg` |
+| Documentación: instalación, workflow y pruebas | `deluge/README.md` |
+| Prueba de la misma lógica por API: se creó un Deal asociado a un contacto y luego se actualizaron los dos campos del contacto con `PUT /Contacts/{id}` | Postman: *Crear deal* (201) y *Actualizar contacto* (200) |
+
+![Campos en Contacts](capturas/21-campos-contacts.png)
+
+![Opción Funciones no disponible](capturas/15-error-funcion.png)
+
+---
+
+## 8. Problemas que tuvimos y cómo se solucionaron
+
+En esta sección se explica, en palabras sencillas, cada problema que apareció durante la configuración y qué se hizo para resolverlo. Sirve como guía por si alguien más se encuentra con lo mismo.
+
+### 8.1 Zoho no dejaba crear la función Deluge
+
+**Qué pasó:** al intentar crear la función desde el workflow, la ventana de "Configurar función" se quedaba trabada y no permitía escribir el código. En la consola del navegador aparecía un error 500.
+
+**Por qué:** el error 500 quiere decir que **el problema era del servidor de Zoho**, no de algo que hiciéramos mal. Puede deberse a una falla temporal de Zoho o a que la edición de la cuenta tiene limitaciones para funciones.
+
+**Cómo se manejó:** se dejó la función para el final y se siguió con lo demás. El código ya está listo en [`deluge/actualizar_contacto_desde_deal.dg`](deluge/actualizar_contacto_desde_deal.dg). Las alternativas para volver a intentarlo son: crear la función desde **Configuración → Automatización → Acciones → Funciones** (y no desde el workflow), recargar la página, o probar en una ventana de incógnito.
+
+📸 `capturas/15-error-funcion.png`
+
+![Error función](capturas/15-error-funcion.png)
+
+### 8.2 El nombre del campo del monto estaba mal escrito en el código
+
+**Qué pasó:** el código decía `Monto_Ultimo_Deal` (con "U" mayúscula), pero en Zoho el campo se llama `Monto_ultimo_Deal` (con "u" minúscula).
+
+**Por qué importa:** Zoho distingue mayúsculas de minúsculas en los nombres de los campos. Si el nombre no es exacto, la función no encuentra el campo y no lo llena.
+
+**Cómo se solucionó:** se revisó el nombre real en Zoho y se corrigió en el código y en el README.
+
+![Campos en Contacts](capturas/21-campos-contacts.png)
+
+### 8.3 La colección de Postman no aparecía
+
+**Qué pasó:** se buscaba la variable `grant_code` y no aparecía por ningún lado.
+
+**Por qué:** la colección no se había importado en Postman todavía, así que sus variables no existían.
+
+**Cómo se solucionó:** se importó el archivo de la colección con **Import** (Ctrl + O) y luego se abrieron sus variables en la pestaña **Variables** de la colección.
+
+### 8.4 Postman avisó "Secrets Detected"
+
+**Qué pasó:** apareció una alerta diciendo que había un "secreto" (una clave) guardada en la colección.
+
+**Por qué:** era una **falsa alarma**. Postman vio el texto `Zoho-oauthtoken {{access_token}}` y pensó que era una clave real, pero en realidad era solo el nombre de una variable, no el token.
+
+**Cómo se solucionó:** se ignoró la alerta. No se usó "Secure All", porque eso cambia la configuración y podía dañar la autenticación.
+
+![Alerta de secretos](capturas/20-postman-secrets.png)
+
+### 8.5 Las peticiones no tenían dirección (URL)
+
+**Qué pasó:** al abrir "Generar tokens" y "Listar leads", el espacio de la dirección estaba vacío.
+
+**Por qué:** la colección se había armado sin las direcciones completas.
+
+**Cómo se solucionó:** se escribió la dirección correcta en cada una. Por ejemplo, para pedir los tokens: `https://accounts.zoho.com/oauth/v2/token`.
+
+### 8.6 Error "ENOTFOUND {{base_url}}"
+
+**Qué pasó:** Postman no podía enviar la petición y mostraba ese mensaje.
+
+**Por qué:** la dirección usaba una variable llamada `base_url` que **no existía**. Es como mandar una carta a "la dirección de siempre" sin haber escrito nunca cuál es esa dirección. Además, la petición no estaba guardada dentro de la colección, así que no podía ver sus variables.
+
+**Cómo se solucionó:** se guardó la petición dentro de la colección `zoho-crm` y se usó la dirección completa `https://www.zohoapis.com/crm/v6/...`.
+
+![ENOTFOUND](capturas/17-postman-enotfound.png)
+
+### 8.7 Error "INVALID_TOKEN" (token vencido)
+
+**Qué pasó:** peticiones que antes funcionaban empezaron a fallar.
+
+**Por qué:** el token de acceso funciona como una **pulsera de entrada que dura solo 1 hora**. Pasado ese tiempo, Zoho ya no la acepta.
+
+**Cómo se solucionó:** se ejecutó **OAuth → 2. Renovar access_token**, que usa el `refresh_token` (una clave de larga duración) para conseguir un token nuevo sin repetir todo el proceso. El token nuevo se pegó en la variable `access_token`.
+
+### 8.8 Error "AUTHENTICATION_FAILURE" aunque el token era bueno
+
+**Qué pasó:** "Listar leads" funcionaba, pero "Listar contactos", "Crear contacto" y "Actualizar contacto" fallaban con el mismo token.
+
+**Por qué:** Postman tiene **dos lugares** para poner el token: la pestaña **Authorization** y la pestaña **Headers**. Las peticiones nuevas se copiaron de otras y venían con la pestaña Authorization configurada para "heredar" un token viejo de la colección. Cuando hay dos tokens, Postman usa el de la pestaña Authorization, así que a Zoho le llegaba el viejo y lo rechazaba. En "Crear contacto", además, faltaba el token en Headers.
+
+**Cómo se solucionó:**
+1. En la pestaña **Authorization** se escogió **No Auth**, para que Postman no mande el token viejo.
+2. En **Headers** se dejó una sola línea: `Authorization` = `Zoho-oauthtoken {{access_token}}`.
+
+**Lección:** al copiar una petición, revisar siempre esas dos pestañas.
+
+![Falta el header Authorization](capturas/18-postman-auth-failure.png)
+
+### 8.9 "204 No Content" al listar contactos
+
+**Qué pasó:** la petición respondió 204 y no mostró nada.
+
+**Por qué:** **no era un error**. Significa "todo bien, pero no hay datos": todavía no existía ningún contacto en el CRM.
+
+**Cómo se solucionó:** se creó un contacto con "Crear contacto" y al volver a listar ya respondió 200 con el contacto.
+
+![204 No Content](capturas/19-postman-204.png)
+
+### 8.10 Error "DUPLICATE_DATA" al crear un contacto
+
+**Qué pasó:** al volver a crear el contacto de prueba, Zoho respondió 400.
+
+**Por qué:** Zoho **no permite dos contactos con el mismo correo**. Como el contacto ya se había creado antes, lo rechazó para evitar duplicados. Esto demuestra que la validación de Zoho funciona.
+
+**Cómo se solucionó:** se cambió el correo por uno que se genera distinto cada vez: `prueba.{{$timestamp}}@ejemplo.com`.
+
+📸 `capturas/16-postman-duplicado.png`
+
+![Duplicado](capturas/16-postman-duplicado.png)
+
+### Resumen rápido
+
+| # | Problema | Causa en pocas palabras | Solución |
+|---|---|---|---|
+| 1 | No se podía crear la función | Falla del servidor de Zoho | Dejarla para el final; código ya listo |
+| 2 | Nombre del campo mal escrito | Mayúscula de más | Corregir a `Monto_ultimo_Deal` |
+| 3 | No aparecía la colección | No se había importado | Importarla en Postman |
+| 4 | Alerta de "secretos" | Falsa alarma | Ignorarla |
+| 5 | Peticiones sin URL | Colección incompleta | Escribir la URL |
+| 6 | ENOTFOUND | Variable que no existía | Usar la URL completa / guardar en la colección |
+| 7 | INVALID_TOKEN | Token vencido (1 hora) | Renovar el token |
+| 8 | AUTHENTICATION_FAILURE | Token viejo heredado | Authorization en **No Auth** + header correcto |
+| 9 | 204 No Content | No había contactos (no es error) | Crear un contacto |
+| 10 | DUPLICATE_DATA | Correo repetido | Correo que cambia solo |
 
 ---
 

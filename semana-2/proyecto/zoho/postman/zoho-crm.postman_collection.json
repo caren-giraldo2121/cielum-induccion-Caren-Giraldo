@@ -1,82 +1,12 @@
 {
   "info": {
-    "_postman_id": "a75d0f5a-b418-4b40-9b9c-fb720fbb5191",
+    "_postman_id": "d4821292-7688-4859-b9de-00218d7c1e7b",
     "name": "zoho-crm",
     "description": "Colección de práctica Zoho CRM (Cielum). Sin tokens reales: todo usa variables del entorno 'zoho-crm'. La renovación del access_token es automática (script de la colección).",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58820448",
+    "_collection_link": "https://go.postman.co/collection/58820448-d4821292-7688-4859-b9de-00218d7c1e7b?source=collection_link"
   },
-  "auth": {
-    "type": "apikey",
-    "apikey": [
-      {
-        "key": "key",
-        "value": "Authorization",
-        "type": "string"
-      },
-      {
-        "key": "value",
-        "value": "Zoho-oauthtoken {{access_token}}",
-        "type": "string"
-      },
-      {
-        "key": "in",
-        "value": "header",
-        "type": "string"
-      }
-    ]
-  },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// Renovación AUTOMÁTICA del access_token con el refresh_token.",
-          "// Se ejecuta antes de cada petición de la colección (excepto las de /oauth/v2/token).",
-          "const esPeticionDeToken = pm.request.url.toString().includes('/oauth/v2/token');",
-          "",
-          "if (!esPeticionDeToken) {",
-          "  const token = pm.environment.get('access_token');",
-          "  const expira = Number(pm.environment.get('token_expires_at') || 0);",
-          "  // Se renueva si no hay token o si vence en menos de 1 minuto",
-          "  const vencido = !token || Date.now() > expira - 60000;",
-          "",
-          "  if (vencido) {",
-          "    const refresh = pm.environment.get('refresh_token');",
-          "    if (!refresh) {",
-          "      console.warn('No hay refresh_token. Ejecuta primero \"OAuth > 1. Generar tokens (grant code)\".');",
-          "    } else {",
-          "      pm.sendRequest({",
-          "        url: pm.environment.get('accounts_url') + '/oauth/v2/token',",
-          "        method: 'POST',",
-          "        header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
-          "        body: {",
-          "          mode: 'urlencoded',",
-          "          urlencoded: [",
-          "            { key: 'grant_type', value: 'refresh_token' },",
-          "            { key: 'client_id', value: pm.environment.get('client_id') },",
-          "            { key: 'client_secret', value: pm.environment.get('client_secret') },",
-          "            { key: 'refresh_token', value: refresh }",
-          "          ]",
-          "        }",
-          "      }, (err, res) => {",
-          "        if (err) { console.error('Error renovando el token:', err); return; }",
-          "        const json = res.json();",
-          "        if (json.access_token) {",
-          "          pm.environment.set('access_token', json.access_token);",
-          "          pm.environment.set('token_expires_at', Date.now() + (json.expires_in || 3600) * 1000);",
-          "          console.log('access_token renovado automáticamente');",
-          "        } else {",
-          "          console.error('Zoho no devolvió access_token:', json);",
-          "        }",
-          "      });",
-          "    }",
-          "  }",
-          "}"
-        ]
-      }
-    }
-  ],
   "item": [
     {
       "name": "OAuth",
@@ -135,10 +65,11 @@
               ]
             },
             "url": {
-              "raw": "{{accounts_url}}/oauth/v2/token"
+              "raw": ""
             },
             "description": "Cambia el grant code (generado en el Self Client, dura pocos minutos y sirve una sola vez) por access_token + refresh_token."
-          }
+          },
+          "response": []
         },
         {
           "name": "2. Renovar access_token (manual)",
@@ -186,10 +117,11 @@
               ]
             },
             "url": {
-              "raw": "{{accounts_url}}/oauth/v2/token"
+              "raw": ""
             },
             "description": "No hace falta usarla: la colección renueva sola el token antes de cada petición. Está aquí para probar el flujo a mano."
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -233,10 +165,11 @@
               }
             },
             "url": {
-              "raw": "{{api_domain}}/crm/{{api_version}}/Leads"
+              "raw": ""
             },
             "description": "Crea un lead con Origen Cielum = Web (dispara el workflow que asigna la tarea). Guarda el id en {{lead_id}}."
-          }
+          },
+          "response": []
         },
         {
           "name": "Consultar lead por id",
@@ -255,9 +188,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{api_domain}}/crm/{{api_version}}/Leads/{{lead_id}}"
+              "raw": ""
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Listar leads",
@@ -273,13 +207,43 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{access_token}}"
+              }
+            ],
             "url": {
-              "raw": "{{api_domain}}/crm/{{api_version}}/Leads?fields=First_Name,Last_Name,Email,Company,City,Origen_Cielum&per_page=10&page=1"
+              "raw": "https://www.zohoapis.com/crm/v6/Leads?fields=First_Name,Last_Name,Email,Company&per_page=10",
+              "protocol": "https",
+              "host": [
+                "www",
+                "zohoapis",
+                "com"
+              ],
+              "path": [
+                "crm",
+                "v6",
+                "Leads"
+              ],
+              "query": [
+                {
+                  "key": "fields",
+                  "value": "First_Name,Last_Name,Email,Company"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
             },
             "description": "Desde la API v3 el parámetro fields es obligatorio al listar registros."
-          }
+          },
+          "response": []
         },
         {
           "name": "Actualizar lead",
@@ -312,9 +276,10 @@
               }
             },
             "url": {
-              "raw": "{{api_domain}}/crm/{{api_version}}/Leads/{{lead_id}}"
+              "raw": ""
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Buscar lead por email",
@@ -335,9 +300,10 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{api_domain}}/crm/{{api_version}}/Leads/search?email=prueba.postman@ejemplo.com"
+              "raw": ""
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Buscar leads por Origen Cielum",
@@ -358,12 +324,298 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{api_domain}}/crm/{{api_version}}/Leads/search?criteria=(Origen_Cielum:equals:Web)"
+              "raw": ""
             },
             "description": "Usa el campo personalizado. Si Zoho le asignó otro nombre de API al campo, cámbialo aquí y en los cuerpos JSON."
-          }
+          },
+          "response": []
+        },
+        {
+          "name": "Crear deal",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lead creado (201)', () => pm.response.to.have.status(201));\nconst r = pm.response.json().data?.[0];\npm.test('Respuesta SUCCESS', () => pm.expect(r.code).to.eql('SUCCESS'));\nif (r?.details?.id) {\n  pm.environment.set('lead_id', r.details.id);\n  console.log('lead_id guardado:', r.details.id);\n}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "   {\n     \"data\": [\n       {\n         \"Deal_Name\": \"Deal desde Postman\",\n         \"Amount\": 2500000,\n         \"Stage\": \"Qualification\",\n         \"Closing_Date\": \"2026-12-31\",\n         \"Contact_Name\": { \"id\": \"7644537000000715001\" }\n       }\n     ],\n     \"trigger\": [\"workflow\"]\n   }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://www.zohoapis.com/crm/v6/Deals",
+              "protocol": "https",
+              "host": [
+                "www",
+                "zohoapis",
+                "com"
+              ],
+              "path": [
+                "crm",
+                "v6",
+                "Deals"
+              ]
+            },
+            "description": "Crea un lead con Origen Cielum = Web (dispara el workflow que asigna la tarea). Guarda el id en {{lead_id}}."
+          },
+          "response": []
         }
       ]
+    },
+    {
+      "name": "Contactos",
+      "item": [
+        {
+          "name": "Listar contactos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://www.zohoapis.com/crm/v6/Contacts?fields=First_Name,Last_Name,Email,Ultimo_Deal,Monto_ultimo_Deal&per_page=10",
+              "protocol": "https",
+              "host": [
+                "www",
+                "zohoapis",
+                "com"
+              ],
+              "path": [
+                "crm",
+                "v6",
+                "Contacts"
+              ],
+              "query": [
+                {
+                  "key": "fields",
+                  "value": "First_Name,Last_Name,Email,Ultimo_Deal,Monto_ultimo_Deal"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Desde la API v3 el parámetro fields es obligatorio al listar registros."
+          },
+          "response": []
+        },
+        {
+          "name": "Crear contacto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lead creado (201)', () => pm.response.to.have.status(201));\nconst r = pm.response.json().data?.[0];\npm.test('Respuesta SUCCESS', () => pm.expect(r.code).to.eql('SUCCESS'));\nif (r?.details?.id) {\n  pm.environment.set('lead_id', r.details.id);\n  console.log('lead_id guardado:', r.details.id);\n}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "   {\n     \"data\": [\n       {\n         \"First_Name\": \"Prueba\",\n         \"Last_Name\": \"Postman\",\n         \"Email\": \"prueba.postman@ejemplo.com\",\n         \"Phone\": \"3000000000\"\n       }\n     ]\n   }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://www.zohoapis.com/crm/v6/Contacts",
+              "protocol": "https",
+              "host": [
+                "www",
+                "zohoapis",
+                "com"
+              ],
+              "path": [
+                "crm",
+                "v6",
+                "Contacts"
+              ]
+            },
+            "description": "Crea un lead con Origen Cielum = Web (dispara el workflow que asigna la tarea). Guarda el id en {{lead_id}}."
+          },
+          "response": []
+        },
+        {
+          "name": "Actualizar contacto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Respuesta 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken {{access_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "   {\n     \"data\": [\n       {\n         \"Ultimo_Deal\": \"Deal desde Postman\",\n         \"Monto_ultimo_Deal\": 2500000\n       }\n     ]\n   }",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://www.zohoapis.com/crm/v6/Contacts/7644537000000715001",
+              "protocol": "https",
+              "host": [
+                "www",
+                "zohoapis",
+                "com"
+              ],
+              "path": [
+                "crm",
+                "v6",
+                "Contacts",
+                "7644537000000715001"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Renovación AUTOMÁTICA del access_token con el refresh_token.",
+          "// Se ejecuta antes de cada petición de la colección (excepto las de /oauth/v2/token).",
+          "const esPeticionDeToken = pm.request.url.toString().includes('/oauth/v2/token');",
+          "",
+          "if (!esPeticionDeToken) {",
+          "  const token = pm.environment.get('access_token');",
+          "  const expira = Number(pm.environment.get('token_expires_at') || 0);",
+          "  // Se renueva si no hay token o si vence en menos de 1 minuto",
+          "  const vencido = !token || Date.now() > expira - 60000;",
+          "",
+          "  if (vencido) {",
+          "    const refresh = pm.environment.get('refresh_token');",
+          "    if (!refresh) {",
+          "      console.warn('No hay refresh_token. Ejecuta primero \"OAuth > 1. Generar tokens (grant code)\".');",
+          "    } else {",
+          "      pm.sendRequest({",
+          "        url: pm.environment.get('accounts_url') + '/oauth/v2/token',",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/x-www-form-urlencoded' },",
+          "        body: {",
+          "          mode: 'urlencoded',",
+          "          urlencoded: [",
+          "            { key: 'grant_type', value: 'refresh_token' },",
+          "            { key: 'client_id', value: pm.environment.get('client_id') },",
+          "            { key: 'client_secret', value: pm.environment.get('client_secret') },",
+          "            { key: 'refresh_token', value: refresh }",
+          "          ]",
+          "        }",
+          "      }, (err, res) => {",
+          "        if (err) { console.error('Error renovando el token:', err); return; }",
+          "        const json = res.json();",
+          "        if (json.access_token) {",
+          "          pm.environment.set('access_token', json.access_token);",
+          "          pm.environment.set('token_expires_at', Date.now() + (json.expires_in || 3600) * 1000);",
+          "          console.log('access_token renovado automáticamente');",
+          "        } else {",
+          "          console.error('Zoho no devolvió access_token:', json);",
+          "        }",
+          "      });",
+          "    }",
+          "  }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "grant_code",
+      "value": ""
+    },
+    {
+      "key": "client_id",
+      "value": ""
+    },
+    {
+      "key": "client_secret",
+      "value": ""
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "base_url",
+      "value": ""
     }
   ]
 }

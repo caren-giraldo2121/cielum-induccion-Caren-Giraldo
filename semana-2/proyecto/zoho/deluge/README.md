@@ -13,7 +13,7 @@ En **Configuración → Personalización → Módulos y campos → Contacts**, c
 | Etiqueta | Tipo | Nombre de API esperado |
 |---|---|---|
 | Último Deal | Línea única | `Ultimo_Deal` |
-| Monto último Deal | Moneda | `Monto_Ultimo_Deal` |
+| Monto último Deal | Moneda | `Monto_ultimo_Deal` |
 
 > Zoho genera el nombre de API a partir de la etiqueta. Si te asigna otro (por ejemplo `ltimo_Deal` por la tilde), cópialo desde la columna "Nombre de API" y cámbialo en el código.
 

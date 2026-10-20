@@ -7,7 +7,7 @@
  *   Cuando se crea un Deal, busca el Contact asociado y le actualiza dos
  *   campos personalizados con la información del Deal:
  *     - Ultimo_Deal        (Línea única)  -> nombre del Deal
- *     - Monto_Ultimo_Deal  (Moneda)       -> monto del Deal
+ *     - Monto_ultimo_Deal  (Moneda)       -> monto del Deal
  *
  * Argumento (se mapea en el workflow):
  *   dealId  ->  Deals.Deal Id
@@ -30,7 +30,7 @@ void automation.actualizarContactoDesdeDeal(String dealId)
 	// 3. Armar los datos a actualizar en el Contact
 	datos = Map();
 	datos.put("Ultimo_Deal", deal.get("Deal_Name"));
-	datos.put("Monto_Ultimo_Deal", deal.get("Amount"));
+	datos.put("Monto_ultimo_Deal", deal.get("Amount"));
 
 	// 4. Actualizar el Contact y dejar registro de la respuesta
 	respuesta = zoho.crm.updateRecord("Contacts", contactId.toLong(), datos);
