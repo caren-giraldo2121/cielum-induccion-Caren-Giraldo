@@ -9,6 +9,9 @@ services:
       - PORT=3000
       - DB_HOST=postgres
       - DATABASE_URL=postgresql://postgres:password123@postgres:5432/cielum_db
+      # Parte 7: la API avisa a n8n cada vez que se crea un pedido
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/pedido-creado
+      - N8N_WEBHOOK_TOKEN=${N8N_WEBHOOK_TOKEN:-cielum-token-dev}
     depends_on:
       - postgres
       - sqlserver
@@ -75,8 +78,54 @@ services:
     networks:
       - red-cielum
 
+  # ---------- Parte 7: automatizacion ----------
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: cian_n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/Bogota
+      - TZ=America/Bogota
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - N8N_SECURE_COOKIE=false
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      # Permite usar $env.VARIABLE dentro de los flujos (credenciales de Zoho, token del webhook)
+      - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
+      # Carpeta donde los flujos pueden leer/escribir archivos (ejercicio basico)
+      - N8N_RESTRICT_FILE_ACCESS_TO=/files
+      - N8N_WEBHOOK_TOKEN=${N8N_WEBHOOK_TOKEN:-cielum-token-dev}
+    env_file:
+      - path: ./n8n/.env          # credenciales de Zoho y correo (copiar de n8n/.env.example)
+        required: false
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/archivos:/files
+      - ./n8n:/workflows:ro      # para importar los .json con la CLI de n8n
+    depends_on:
+      - postgres
+      - mailpit
+    restart: unless-stopped
+    networks:
+      - red-cielum
+
+  # Servidor SMTP de pruebas: atrapa todos los correos y los muestra en http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: cian_mailpit
+    ports:
+      - "8025:8025"   # bandeja web
+      - "1025:1025"   # SMTP
+    restart: unless-stopped
+    networks:
+      - red-cielum
+
 volumes:
   pgdata:
+  n8n_data:
 
 networks:
   red-cielum:

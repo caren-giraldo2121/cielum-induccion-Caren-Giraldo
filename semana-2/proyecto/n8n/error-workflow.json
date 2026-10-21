@@ -1,0 +1,59 @@
+{
+  "name": "error-workflow-aviso-correo",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c8fa106d-1505-40d0-b40d-2e5ff3e27b2c",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFICACION_EMAIL_DE || 'n8n@cielum.local' }}",
+        "toEmail": "={{ $env.NOTIFICACION_EMAIL_PARA || 'caren@cielum.com' }}",
+        "subject": "=🚨 Falló el flujo \"{{ $json.workflow.name }}\"",
+        "emailFormat": "text",
+        "text": "=Falló un flujo de n8n.\n\nFlujo: {{ $json.workflow.name }} (id {{ $json.workflow.id }})\nNodo que falló: {{ $json.execution.lastNodeExecuted }}\nError: {{ $json.execution.error.message }}\nModo: {{ $json.execution.mode }}\nVer ejecución: {{ $json.execution.url }}\nFecha: {{ $now.setZone('America/Bogota').toFormat('yyyy-MM-dd HH:mm:ss') }}",
+        "options": {}
+      },
+      "id": "bd14f316-4044-46e3-9e03-1c42f791f040",
+      "name": "Avisar por correo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REEMPLAZAR",
+          "name": "SMTP Mailpit"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Avisar por correo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

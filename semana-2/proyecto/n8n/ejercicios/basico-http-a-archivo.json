@@ -1,0 +1,103 @@
+{
+  "name": "ejercicio-basico-http-a-archivo",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "98039327-7017-4b10-8a18-7817b31f755b",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://api:3000/prueba-db",
+        "options": {}
+      },
+      "id": "7780907d-0d2d-481b-9db9-e81a0b94e8cf",
+      "name": "HTTP Request productos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "csv",
+        "options": {
+          "fileName": "productos.csv"
+        }
+      },
+      "id": "a95b85df-e955-4dcd-9c4d-1ccee16192b0",
+      "name": "Convertir a CSV",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/files/productos_{{ $now.toFormat('yyyyMMdd_HHmmss') }}.csv",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "id": "82c59157-e9c4-45e9-85a3-49e2920cec50",
+      "name": "Guardar archivo",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        660,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request productos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request productos": {
+      "main": [
+        [
+          {
+            "node": "Convertir a CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convertir a CSV": {
+      "main": [
+        [
+          {
+            "node": "Guardar archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

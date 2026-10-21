@@ -4,7 +4,9 @@ import { useApi } from "../hooks/useApi.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { Mensaje, Cargando } from "../components/ui.jsx";
 
-const ESTADOS = ["Pendiente", "Pagado", "Enviado", "Entregado", "Cancelado"];
+// Un pedido nuevo solo puede nacer Pendiente, Pagado o Enviado (la API también lo valida).
+// Entregado y Cancelado se asignan después desde la lista de pedidos.
+const ESTADOS = ["Pendiente", "Pagado", "Enviado"];
 const moneda = (n) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
 

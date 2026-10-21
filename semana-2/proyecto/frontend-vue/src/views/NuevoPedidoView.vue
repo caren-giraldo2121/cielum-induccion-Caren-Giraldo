@@ -5,7 +5,8 @@ import { useApi } from "../composables/useApi.js";
 import { useAuthStore } from "../stores/auth.js";
 import Mensaje from "../components/Mensaje.vue";
 
-const ESTADOS = ["Pendiente", "Pagado", "Enviado", "Entregado", "Cancelado"];
+// Un pedido nuevo solo puede nacer Pendiente, Pagado o Enviado (la API también lo valida).
+const ESTADOS = ["Pendiente", "Pagado", "Enviado"];
 const moneda = (n) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
 const lineaVacia = () => ({ id_producto: "", cantidad: 1, precio_unitario: "" });

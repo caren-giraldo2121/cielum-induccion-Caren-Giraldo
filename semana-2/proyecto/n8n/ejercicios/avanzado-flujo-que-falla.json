@@ -1,0 +1,49 @@
+{
+  "name": "ejercicio-avanzado-flujo-que-falla",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "113d485d-3a2d-4732-8d94-f039b9194d9a",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://api:3000/ruta-que-no-existe",
+        "options": {}
+      },
+      "id": "a31da2bd-bade-4c23-a718-443d9d9dff94",
+      "name": "HTTP que da 404",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP que da 404",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "tags": []
+}

@@ -1,5 +1,6 @@
 const pedidosService = require('../services/pedidos.service');
 const pedidosQuerySchema = require('../schemas/pedidosQuery.schema');
+const n8nService = require('../services/n8n.service');
 
 // Listar pedidos con filtros y paginación
 async function listarPedidos(req, res, next) {
@@ -59,6 +60,9 @@ async function registrarPedido(req, res, next) {
         const pedido = await pedidosService.crearPedido(
             id_cliente, estado, detalles
         );
+
+        // Avisar a n8n (sin await: no bloquea ni rompe la respuesta)
+        n8nService.notificarPedidoCreado(pedido, detalles);
 
         res.status(201).json({
             mensaje: 'Pedido creado correctamente',

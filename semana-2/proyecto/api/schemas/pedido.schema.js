@@ -1,12 +1,16 @@
 const { z } = require('zod');
+
+const ESTADOS_INICIALES = ['Pendiente', 'Pagado', 'Enviado'];
+
 const pedidoSchema = z.object({
     id_cliente: z.number().int().positive(
         'El ID del cliente debe ser un entero mayor que 0'
     ),
-    estado: z.string().trim().min(
-        1,
-        'El estado del pedido es obligatorio'
-    ),
+    // Un pedido nuevo solo puede nacer Pendiente, Pagado o Enviado.
+    // Entregado y Cancelado se asignan despues con PUT /pedidos/:id.
+    estado: z.enum(ESTADOS_INICIALES, {
+        message: `Un pedido nuevo solo puede crearse como: ${ESTADOS_INICIALES.join(', ')}`
+    }).default('Pendiente'),
     detalles: z.array(
         z.object({
             id_producto: z.number().int().positive(

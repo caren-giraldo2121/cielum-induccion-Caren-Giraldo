@@ -39,6 +39,23 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
     precio_unitario NUMERIC(12,2) NOT NULL
 );
 
+-- Bitacora de integraciones (parte 7 - n8n)
+CREATE TABLE IF NOT EXISTS log_integraciones (
+    id_log        SERIAL PRIMARY KEY,
+    fecha         TIMESTAMP    NOT NULL DEFAULT NOW(),
+    flujo         VARCHAR(100) NOT NULL,             -- p. ej. 'pedido-a-zoho'
+    id_pedido     INTEGER,                           -- sin FK: el log se conserva aunque borren el pedido
+    email_cliente VARCHAR(150),
+    accion        VARCHAR(30)  NOT NULL,             -- creado | actualizado | rechazado | error
+    estado        VARCHAR(20)  NOT NULL,             -- exito | error
+    id_zoho       VARCHAR(50),                       -- id del Contact en Zoho
+    mensaje       TEXT,
+    payload       JSONB                              -- lo que llegó al webhook
+);
+
+CREATE INDEX IF NOT EXISTS idx_log_integraciones_pedido ON log_integraciones (id_pedido);
+CREATE INDEX IF NOT EXISTS idx_log_integraciones_fecha  ON log_integraciones (fecha);
+
 -- ============================================================
 --  Datos iniciales
 --  (contrasena de los usuarios de prueba: 123456)

@@ -1,0 +1,622 @@
+{
+  "name": "pedido-a-zoho",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pedido-creado",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "d38d967f-baae-4bae-b406-f14370c3f05b",
+      "name": "Webhook pedido creado",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "e4026ba5-7470-4e38-9f36-a04e0365219b"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Valida el pedido que envía la API (POST /pedidos -> webhook)\nconst entrada = $input.first().json;\nconst body = entrada.body || {};\nconst headers = entrada.headers || {};\nconst errores = [];\n\n// 1) Token compartido entre la API y n8n (evita que cualquiera llame al webhook)\nlet tokenEsperado = '';\ntry { tokenEsperado = $env.N8N_WEBHOOK_TOKEN || ''; } catch (e) { tokenEsperado = ''; }\nif (tokenEsperado && headers['x-cielum-token'] !== tokenEsperado) {\n  errores.push('Token del webhook inválido o ausente (header x-cielum-token)');\n}\n\n// 2) Estructura mínima del pedido\nconst pedido = body.pedido || {};\nconst cliente = body.cliente || {};\nconst detalles = Array.isArray(body.detalles) ? body.detalles : [];\nconst email = String(cliente.email || '').trim().toLowerCase();\n\nif (body.evento !== 'pedido.creado') errores.push('Evento desconocido: ' + body.evento);\nif (!Number.isInteger(pedido.id_pedido)) errores.push('Falta pedido.id_pedido');\nif (!cliente.nombre) errores.push('Falta el nombre del cliente');\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) errores.push('Correo del cliente inválido: \"' + email + '\"');\nif (detalles.length === 0) errores.push('El pedido no tiene detalles');\n\nconst total = Number(body.total) || 0;\nconst fecha = String(pedido.fecha_pedido || '').slice(0, 10);\n\nreturn [{\n  json: {\n    valido: errores.length === 0,\n    errores,\n    id_pedido: pedido.id_pedido ?? null,\n    estado_pedido: pedido.estado ?? null,\n    fecha_pedido: fecha,\n    total,\n    cliente: { ...cliente, email },\n    // Datos listos para Zoho (Last_Name es obligatorio en Contacts)\n    zoho: {\n      Last_Name: cliente.nombre || 'Sin nombre',\n      Email: email,\n      Phone: cliente.telefono || null,\n      Description: `Último pedido Cielum #${pedido.id_pedido} · ${pedido.estado} · ${fecha} · total $${total.toLocaleString('es-CO')}`\n    },\n    payload: body\n  }\n}];"
+      },
+      "id": "4ce89dc2-e5b0-486c-a8e7-5bf20e1b8cd4",
+      "name": "Validar pedido",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f12f4965-8302-404d-854f-e476faad2b02",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "4be89d56-3715-4b35-8adb-c5888b787682",
+      "name": "¿Pedido válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZOHO_ACCOUNTS_URL || 'https://accounts.zoho.com' }}/oauth/v2/token",
+        "options": {
+          "timeout": 15000
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "refresh_token",
+              "value": "={{ $env.ZOHO_REFRESH_TOKEN }}"
+            },
+            {
+              "name": "client_id",
+              "value": "={{ $env.ZOHO_CLIENT_ID }}"
+            },
+            {
+              "name": "client_secret",
+              "value": "={{ $env.ZOHO_CLIENT_SECRET }}"
+            },
+            {
+              "name": "grant_type",
+              "value": "refresh_token"
+            }
+          ]
+        }
+      },
+      "id": "262485fb-a525-45b2-a458-398e45936519",
+      "name": "Obtener token Zoho",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        200
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "78573459-bdaf-48c8-b2e9-03626f1fe173",
+              "leftValue": "={{ !!$json.access_token }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "b6e92290-111d-4de2-a32e-a94765cc653c",
+      "name": "¿Token OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Obtener token Zoho').first().json.api_domain }}/crm/v8/Contacts/search",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "email",
+              "value": "={{ $('Validar pedido').first().json.cliente.email }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Zoho-oauthtoken {{ $('Obtener token Zoho').first().json.access_token }}"
+            }
+          ]
+        }
+      },
+      "id": "a46ef75b-3bf9-4956-9260-a3f81a4329d2",
+      "name": "Buscar cliente en Zoho",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        100
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4858283b-c4e1-4e2d-852f-4b5f74ed5ddb",
+              "leftValue": "={{ $json.statusCode === 200 && (($json.body && $json.body.data) ? $json.body.data.length : 0) > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f15cd059-a1e1-4270-bfcc-8eedc95857cf",
+      "name": "¿Existe en Zoho?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $('Obtener token Zoho').first().json.api_domain }}/crm/v8/Contacts/{{ $json.body.data[0].id }}",
+        "options": {
+          "timeout": 15000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Zoho-oauthtoken {{ $('Obtener token Zoho').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: [ { Phone: $('Validar pedido').first().json.zoho.Phone, Description: $('Validar pedido').first().json.zoho.Description } ] }) }}"
+      },
+      "id": "67a89092-e058-4e41-8712-db44d498bfaf",
+      "name": "Actualizar contacto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        0
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Obtener token Zoho').first().json.api_domain }}/crm/v8/Contacts/upsert",
+        "options": {
+          "timeout": 15000
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Zoho-oauthtoken {{ $('Obtener token Zoho').first().json.access_token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: [ $('Validar pedido').first().json.zoho ], duplicate_check_fields: ['Email'] }) }}"
+      },
+      "id": "0024b09f-99bf-4ae0-b912-d0ef33c200e1",
+      "name": "Crear contacto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        200
+      ],
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "notes": "Upsert: si el Email ya existe en Zoho lo actualiza, si no lo crea (evita el retraso del índice de búsqueda)."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Arma la fila para log_integraciones cuando Zoho respondió bien\nconst v = $('Validar pedido').first().json;\nconst r = $input.first().json;\nconst detalle = (r.data && r.data[0]) || {};\n\n// Fue actualizado si: la búsqueda lo encontró (nodo Actualizar contacto)\n// o el upsert respondió action = 'update' (ya existía, pero la búsqueda aún no lo veía)\nconst fueActualizado = $('Actualizar contacto').isExecuted || detalle.action === 'update';\n\nreturn [{\n  json: {\n    flujo: 'pedido-a-zoho',\n    id_pedido: v.id_pedido,\n    email_cliente: v.cliente.email,\n    accion: fueActualizado ? 'actualizado' : 'creado',\n    estado: 'exito',\n    id_zoho: detalle.details ? String(detalle.details.id) : null,\n    mensaje: fueActualizado\n      ? 'El contacto ya existía en Zoho y se actualizó con el último pedido'\n      : 'El contacto no existía en Zoho y se creó',\n    payload: JSON.stringify(v.payload)\n  }\n}];"
+      },
+      "id": "be029d7f-5bc6-434b-9e59-518f5b5c0088",
+      "name": "Preparar log éxito",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// El pedido no pasó la validación: se registra y se avisa, pero no se toca Zoho\nconst v = $input.first().json;\nreturn [{\n  json: {\n    flujo: 'pedido-a-zoho',\n    id_pedido: Number.isInteger(v.id_pedido) ? v.id_pedido : null,\n    email_cliente: v.cliente?.email || null,\n    accion: 'rechazado',\n    estado: 'error',\n    id_zoho: null,\n    mensaje: 'Validación fallida: ' + v.errores.join('; '),\n    payload: JSON.stringify(v.payload || {})\n  }\n}];"
+      },
+      "id": "28a3242a-8f86-405f-a79a-f06302da2b43",
+      "name": "Preparar log rechazado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Llega aquí cuando falla una llamada a Zoho (salida de error de los nodos HTTP)\nconst e = $input.first().json;\nlet v = {};\ntry { v = $('Validar pedido').first().json; } catch (err) { v = {}; }\n\n// n8n deja el error en distintos lugares según el nodo\nlet mensaje = e?.error?.message || e?.error?.description || e?.message || e?.error || e;\nif (typeof mensaje !== 'string') mensaje = JSON.stringify(mensaje);\n\nreturn [{\n  json: {\n    flujo: 'pedido-a-zoho',\n    id_pedido: v.id_pedido ?? null,\n    email_cliente: v.cliente?.email || null,\n    accion: 'error',\n    estado: 'error',\n    id_zoho: null,\n    mensaje: 'Error hablando con Zoho: ' + mensaje.slice(0, 1000),\n    payload: JSON.stringify(v.payload || {})\n  }\n}];"
+      },
+      "id": "321854f3-5056-40f5-9da9-058435ac9b23",
+      "name": "Preparar log error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "log_integraciones",
+          "mode": "list",
+          "cachedResultName": "log_integraciones"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "51757c7c-c605-43d7-a8a1-512be9c54d1e",
+      "name": "Registrar en log_integraciones",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        1980,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REEMPLAZAR",
+          "name": "Postgres Cielum"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $env.NOTIFICACION_EMAIL_DE || 'n8n@cielum.local' }}",
+        "toEmail": "={{ $env.NOTIFICACION_EMAIL_PARA || 'caren@cielum.com' }}",
+        "subject": "={{ $('Registrar en log_integraciones').first().json.estado === 'exito' ? '✅' : '❌' }} Pedido #{{ $('Registrar en log_integraciones').first().json.id_pedido }} → Zoho: {{ $('Registrar en log_integraciones').first().json.accion }}",
+        "emailFormat": "text",
+        "text": "=Flujo: pedido-a-zoho\nPedido: #{{ $json.id_pedido }}\nCliente: {{ $json.email_cliente }}\nAcción: {{ $json.accion }}\nEstado: {{ $json.estado }}\nId en Zoho: {{ $json.id_zoho || '-' }}\nMensaje: {{ $json.mensaje }}\nFecha: {{ $now.setZone('America/Bogota').toFormat('yyyy-MM-dd HH:mm:ss') }}\n\nRegistro guardado en PostgreSQL (tabla log_integraciones, id_log {{ $json.id_log }}).",
+        "options": {}
+      },
+      "id": "e2a254df-662d-4648-ac29-97ad66ef5045",
+      "name": "Enviar correo de notificación",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2200,
+        300
+      ],
+      "credentials": {
+        "smtp": {
+          "id": "REEMPLAZAR",
+          "name": "SMTP Mailpit"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Llega aquí cuando falla una llamada a Zoho (salida de error de los nodos HTTP)\nconst e = $input.first().json;\nlet v = {};\ntry { v = $('Validar pedido').first().json; } catch (err) { v = {}; }\n\n// n8n deja el error en distintos lugares según el nodo\nlet mensaje = e?.error?.message || e?.error?.description || e?.message || e?.error || e;\nif (typeof mensaje !== 'string') mensaje = JSON.stringify(mensaje);\n\nreturn [{\n  json: {\n    flujo: 'pedido-a-zoho',\n    id_pedido: v.id_pedido ?? null,\n    email_cliente: v.cliente?.email || null,\n    accion: 'error',\n    estado: 'error',\n    id_zoho: null,\n    mensaje: 'Zoho no devolvió access_token (revisa ZOHO_* en n8n/.env): ' + mensaje.slice(0, 1000),\n    payload: JSON.stringify(v.payload || {})\n  }\n}];"
+      },
+      "id": "abd04d2d-36f9-4f95-83ac-c35d35fa9af4",
+      "name": "Preparar log sin token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook pedido creado": {
+      "main": [
+        [
+          {
+            "node": "Validar pedido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar pedido": {
+      "main": [
+        [
+          {
+            "node": "¿Pedido válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Pedido válido?": {
+      "main": [
+        [
+          {
+            "node": "Obtener token Zoho",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar log rechazado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener token Zoho": {
+      "main": [
+        [
+          {
+            "node": "¿Token OK?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Token OK?": {
+      "main": [
+        [
+          {
+            "node": "Buscar cliente en Zoho",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar log sin token",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar cliente en Zoho": {
+      "main": [
+        [
+          {
+            "node": "¿Existe en Zoho?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe en Zoho?": {
+      "main": [
+        [
+          {
+            "node": "Actualizar contacto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear contacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar contacto": {
+      "main": [
+        [
+          {
+            "node": "Preparar log éxito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear contacto": {
+      "main": [
+        [
+          {
+            "node": "Preparar log éxito",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar log error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar log éxito": {
+      "main": [
+        [
+          {
+            "node": "Registrar en log_integraciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar log rechazado": {
+      "main": [
+        [
+          {
+            "node": "Registrar en log_integraciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar log error": {
+      "main": [
+        [
+          {
+            "node": "Registrar en log_integraciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar log sin token": {
+      "main": [
+        [
+          {
+            "node": "Registrar en log_integraciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar en log_integraciones": {
+      "main": [
+        [
+          {
+            "node": "Enviar correo de notificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveManualExecutions": true
+  },
+  "pinData": {},
+  "tags": [],
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
